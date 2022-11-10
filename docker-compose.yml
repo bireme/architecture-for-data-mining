@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+  scala:
+    container_name: scala
+    build:
+      context: .
+    links:
+    - mongodb
+    depends_on:
+    - mongodb
+  mongodb:
+    container_name: mongodb
+    image: mongo:6.0.2
+    environment:
+    - PUID=1000
+    - PGID=1000
+    - MONGO_INITDB_ROOT_USERNAME=root
+    - MONGO_INITDB_ROOT_PASSWORD=root
+    - MONGO_INITDB_DATABASE=isismongodb
+    volumes:
+      - ./docker-entrypoint-initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - /home/ubuntu/isis_data/mongodb:/data/db
+    ports:
+    - 27017:27017
+    restart: always
