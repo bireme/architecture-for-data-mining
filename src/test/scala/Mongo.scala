@@ -23,7 +23,7 @@ class Mongo extends munit.FunSuite {
     
     mongodb.collection.find(equal("2", "5")).first().subscribe(
       (doc: org.mongodb.scala.bson.collection.mutable.Document) => 
-        assertEquals(doc.get("18").get.asArray().get(0).asString().getValue(), "Housing survey for disaster relief and preparedness: Latin America^ien"),
+        assertEquals(doc.get("18").get.asString().getValue(), "Housing survey for disaster relief and preparedness: Latin America^ien"),
       (e: Throwable) => {},
       () => {}
     )
