@@ -102,9 +102,21 @@ class IsisDB(var iso_path: String = ""):
           var content = line.group(2)
           
           if (doc.contains(field_number)) {
-            doc.get(field_number).get.asArray().add(BsonString(content))
+            if (doc.get(field_number).get.isString()) {
+              val new_value_str = doc.get(field_number).get.asString()
+              val new_value = List(new_value_str, BsonString(content))
+
+              doc.remove(field_number)
+              doc.put(field_number, new_value)
+            } else if (doc.get(field_number).get.isArray()) {
+              var new_value = doc.get(field_number).get.asArray()
+              new_value.add(BsonString(content))
+
+              doc.remove(field_number)
+              doc.put(field_number, new_value)
+            }
           } else {
-            doc += (field_number, List(content))
+            doc += (field_number, content)
           }
         documents = documents :+ doc
     }

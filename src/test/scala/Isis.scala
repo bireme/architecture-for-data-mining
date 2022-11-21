@@ -63,8 +63,8 @@ class Isis extends munit.FunSuite {
     assert(doc.contains("10") == false)
 
     // Checking some fields values
-    assertEquals(doc.get("1").get.asArray().get(0).asString().getValue(), "CL27.1")
-    assertEquals(doc.get("18").get.asArray().get(0).asString().getValue(), "Vertebral subluxation in chiropractic practice^ien")
-    assertEquals(doc.get("91").get.asArray().get(0).asString().getValue(), "20020307")
+    assertEquals(doc.get("1").get.asString().getValue(), "CL27.1")
+    assertEquals(doc.get("18").get.asString().getValue(), "Vertebral subluxation in chiropractic practice^ien")
+    assertEquals(doc.get("91").get.asString().getValue(), "20020307")
   }
 }
