@@ -75,6 +75,35 @@ class IsisDB(var iso_path: String = ""):
     clean_mst()
 
   /**
+    * Parses the field data, splitting the root content from each subfield
+    * It then adds to a Document element to be inserted into mongodb
+    *
+    * @param content the field text string
+    */
+  def parse_field(content: String): Document =
+    val doc = Document()
+    
+    var root_text = ""
+    try {
+      root_text = content.split("\\^")(0).trim
+    } catch {
+      case e: ArrayIndexOutOfBoundsException => {
+        root_text = ""
+      }
+    }
+    if (root_text != "") {
+      doc.put("content", root_text)
+    }
+
+    val keyValPattern: Regex = "(\\^.)([^\\^]+)".r
+    for patternMatch <- keyValPattern.findAllMatchIn(content) do
+      val sub_field = patternMatch.group(1).replace("^", "_")
+      val sub_field_content = patternMatch.group(2)
+      doc.put(sub_field, sub_field_content)
+    
+    return doc
+
+  /**
     * Parses the data inside the ISIS database to Scala Dictionaries
     * where the field number is the key
     */
@@ -93,24 +122,23 @@ class IsisDB(var iso_path: String = ""):
 
       var records: Array[String] = mx_output.split("(?ms)^mfn= ", 0)
       records = records.drop(1) // removing MFN line 
-      for record <- records
-      do
+      for record <- records do
         var doc = Document("_id" -> new ObjectId())
 
         for line <- field_pattern.findAllMatchIn(record.trim()) do
           val field_number = line.group(1)
-          var content = line.group(2)
+          var content = this.parse_field(line.group(2))
           
           if (doc.contains(field_number)) {
-            if (doc.get(field_number).get.isString()) {
-              val new_value_str = doc.get(field_number).get.asString()
-              val new_value = List(new_value_str, BsonString(content))
+            if (doc.get(field_number).get.isArray()) {
+              var new_value = doc.get(field_number).get.asArray()
+              val new_content = BsonArray(content).get(0)
+              new_value.add(new_content)
 
               doc.remove(field_number)
               doc.put(field_number, new_value)
-            } else if (doc.get(field_number).get.isArray()) {
-              var new_value = doc.get(field_number).get.asArray()
-              new_value.add(BsonString(content))
+            } else {
+              var new_value = BsonArray(doc.get(field_number).get, content)
 
               doc.remove(field_number)
               doc.put(field_number, new_value)
@@ -118,6 +146,7 @@ class IsisDB(var iso_path: String = ""):
           } else {
             doc += (field_number, content)
           }
+          
         documents = documents :+ doc
     }
     return documents
