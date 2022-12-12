@@ -6,18 +6,19 @@
 * MongoDB 6.0.2
 * Mongo-scala-driver 4.7.2
 * Mysql-connector-java 8.0.31
+* Typesafe Config 1.4.2
 * Scribe 3.10.4
 * Docker 20.10
 
 ## CLI Usage
 
-1. Set env variable `ISO_PATH` with the full path for the ISIS ISO file.
 1. Set env variable `ISIS2MONGO_SETTINGS` with `cli`.
+1. Edit the `src/main/resources/cli.conf` config file.
 1. Run `sbt -Dfile.encoding=ISO-8859-1 run` (Enforce ISO-8859-1 encoding for proper ISIS database character manipulation)
 
 ## Docker Usage
 
-1. Set env variable `ISO_PATH` with the full path for the ISIS ISO file.
+1. Edit the `src/main/resources/docker.conf` config file.
 1. `docker compose up` will run a service with MongoDB and another with ISIS2MongoDB that will take as input the env variable defined in the step above.
 
 ## Manipulating ISIS databases
@@ -31,7 +32,7 @@ Ideally, this project would leverage [Apache Spark](https://spark.apache.org/) b
 
 ## FI-Admin integration
 
-FI-Admin's database runs in MySQL Server and is used for parts of the data transformation process. The JDBC connector was available in `Mysql-connector-java` was leveraged in this part of the process.
+FI-Admin's database runs in MySQL Server and is used for parts of the data transformation process. The JDBC connector available in `Mysql-connector-java` was leveraged in this part of the process.
 
 ## Logging (Scribe)
 
