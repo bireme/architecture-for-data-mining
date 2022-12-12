@@ -5,6 +5,8 @@
 * JDK 11
 * MongoDB 6.0.2
 * Mongo-scala-driver 4.7.2
+* Mysql-connector-java 8.0.31
+* Scribe 3.10.4
 * Docker 20.10
 
 ## CLI Usage
@@ -26,3 +28,11 @@ In order to properly read each field, this whole project must be executed in Lat
 ## MongoDB integration
 
 Ideally, this project would leverage [Apache Spark](https://spark.apache.org/) but due to a lack of compatibility between Scala 3 and the Apache Spark plugin, it has been decided to leverage the [MongoDB Scala driver](http://mongodb.github.io/mongo-java-driver/4.7/driver-scala/)
+
+## FI-Admin integration
+
+FI-Admin's database runs in MySQL Server and is used for parts of the data transformation process. The JDBC connector was available in `Mysql-connector-java` was leveraged in this part of the process.
+
+## Logging (Scribe)
+
+Scribe was leveraged as the project's logging feature. Every time this app is executed, a set of log files will be placed under the `logs` folder.

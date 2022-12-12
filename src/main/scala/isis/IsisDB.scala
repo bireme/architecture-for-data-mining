@@ -1,4 +1,6 @@
 package isis
+import config.Settings
+
 import java.nio.file.Paths
 import java.nio.file.Files
 import java.io.FileNotFoundException
@@ -10,7 +12,6 @@ import org.mongodb.scala.bson.BsonObjectId
 import org.mongodb.scala.bson._
 import org.mongodb.scala.bson.collection.mutable.Document
 import scala.collection.JavaConverters._
-import config.Settings
 
 
 /**
@@ -92,7 +93,7 @@ class IsisDB(var iso_path: String = ""):
       }
     }
     if (root_text != "") {
-      doc.put("content", root_text)
+      doc.put("text", root_text)
     }
 
     val keyValPattern: Regex = "(\\^.)([^\\^]+)".r

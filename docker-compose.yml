@@ -4,11 +4,17 @@ services:
   scala:
     container_name: scala
     build:
-      context: .
+      context: ./
+      dockerfile: ./docker/scala/Dockerfile
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    volumes:
+      - ~/isis_data/logs:/isis-to-mongodb/logs
     links:
     - mongodb
     depends_on:
     - mongodb
+
   mongodb:
     container_name: mongodb
     image: mongo:6.0.2
@@ -19,8 +25,14 @@ services:
     - MONGO_INITDB_ROOT_PASSWORD=root
     - MONGO_INITDB_DATABASE=isismongodb
     volumes:
-      - ./docker-entrypoint-initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-      - /home/ubuntu/isis_data/mongodb:/data/db
+      - ~/isis_data/mongodb:/data/db
     ports:
     - 27017:27017
     restart: always
+
+  mongodb-seed:
+    build: 
+      context: ./
+      dockerfile: ./docker/mongodb-seed/Dockerfile
+    depends_on:
+      - mongodb
