@@ -9,22 +9,37 @@ import config.Settings
 
 
 class MongoDB():
-  val user = "root"
-  val passwd = "root"
   var client: MongoClient = _
   var database: MongoDatabase = _
   var collection: MongoCollection[Document] = _
 
   def connect() =
     val host = Settings.getConf("MONGODB_HOST")
+    val port = Settings.getConf("MONGODB_PORT")
+    val user = Settings.getConf("MONGODB_USER")
+    val pass = Settings.getConf("MONGODB_PASSWORD")
+    val db = Settings.getConf("MONGODB_DATABASE")
 
-    client = MongoClient(s"mongodb://root:root@$host:27017")
-    database = client.getDatabase("isismongodb")
+    this.client = MongoClient(s"mongodb://$user:$pass@$host:$port")
+    this.database = client.getDatabase(db)
 
   def set_collection(name: String) =
-    collection = database.getCollection(name)
+    this.collection = this.database.getCollection(name)
+
+  def drop_collection() =
+    val result = this.collection.drop()
+    result.subscribe(
+      Void => {},
+      (e: Throwable) => {println(s"Error: $e")},
+      () => {}
+    )
+    Await.ready(result.toFuture, 30.seconds)
 
   def insert_documents(documents: Array[Document]) =
-    Await.result(collection.insertMany(documents).toFuture(), 10.seconds)
+    Await.result(this.collection.insertMany(documents).toFuture(), 30.seconds)
 
-    //collection.find().subscribe((doc: Document) => println(doc.toJson()))
+  def insert_document(document: Document) =
+    Await.result(this.collection.insertOne(document).toFuture(), 30.seconds)
+
+  def close() =
+    this.client.close()

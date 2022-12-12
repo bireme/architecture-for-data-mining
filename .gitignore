@@ -33,3 +33,5 @@ metals.sbt
 
 # ISIS FILES
 data/isis/
+
+logs/
