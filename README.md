@@ -34,6 +34,8 @@ Ideally, this project would leverage [Apache Spark](https://spark.apache.org/) b
 
 FI-Admin's database runs in MySQL Server and is used for parts of the data transformation process. The JDBC connector available in `Mysql-connector-java` was leveraged in this part of the process.
 
+This database is mainly used for field validation in the Transformation process. Invalid data is logged in a log file as described in `Logging (Scribe)`
+
 ## Logging (Scribe)
 
-Scribe was leveraged as the project's logging feature. Every time this app is executed, a set of log files will be placed under the `logs` folder.
+Scribe was leveraged as the project's logging feature. Every time this app is executed, a set of log files will be placed under the `logs` folder in the user's home folder.
