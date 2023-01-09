@@ -18,12 +18,11 @@ class TransformTest extends munit.FunSuite {
     mongodb.set_collection("01_isiscopy")
     mongodb.insert_documents(documents)
 
-    var transformer = Transformer()
-    transformer.create_biblioref_reference()
+    Transformer.transform_docs()
 
     val mongodb_reference = MongoDB()
     mongodb_reference.connect()
-    mongodb_reference.set_collection("02_biblioref.reference")
+    mongodb_reference.set_collection("02_transformed")
 
     val size = mongodb_reference.collection.countDocuments.subscribe(
       (size: Long) => assertEquals(size.toInt, 10)
@@ -31,7 +30,7 @@ class TransformTest extends munit.FunSuite {
     
     mongodb_reference.collection.find().first().subscribe(
       (doc: org.mongodb.scala.bson.collection.mutable.Document) => {
-        val fields = doc.get("fields").get.asDocument()
+        val fields = doc.get("reference").get.asDocument().get("fields").asDocument()
         assertEquals(fields.getString("reference_title").getValue(), "Vertebral subluxation in chiropractic practice, 1998")
         assertEquals(fields.getString("cooperative_center_code").getValue(), "CL27.1")
         assertEquals(fields.getString("literature_type").getValue(), "M")

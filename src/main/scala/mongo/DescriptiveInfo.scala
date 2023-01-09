@@ -9,9 +9,9 @@ import scala.concurrent.duration.*
 
 
 /**
-  * An abstraction to handle Literature Type data in MongoDB
+  * An abstraction to handle Descriptive Information data in MongoDB
   */
-object LiteratureType:
+object DescriptiveInfo:
   val host = Settings.getConf("MONGODB_HOST")
   val port = Settings.getConf("MONGODB_PORT")
   val user = Settings.getConf("MONGODB_USER")
@@ -20,20 +20,19 @@ object LiteratureType:
 
   val client = MongoClient(s"mongodb://$user:$pass@$host:$port")
   val database = client.getDatabase(db)
-  val collection = database.getCollection("02_domain_v5v6")
+  val collection = database.getCollection("02_domain_v38")
 
-  var is_literature_type_valid_cache: Map[String, Boolean] = Map()
-  def is_literature_type_valid(value_v5: String, value_v6: String) : Boolean =
+  var is_descriptive_code_valid_cache: Map[String, Boolean] = Map()
+  def is_descriptive_code_valid(value_v38_b: String) : Boolean =
     var is_valid = false
 
-    val cache_key = s"$value_v5-$value_v6"
-    if (this.is_literature_type_valid_cache.contains(cache_key)) {
-      is_valid = this.is_literature_type_valid_cache(cache_key)
+    val cache_key = s"$value_v38_b"
+    if (this.is_descriptive_code_valid_cache.contains(cache_key)) {
+      is_valid = this.is_descriptive_code_valid_cache(cache_key)
     } else {
       var docs = this.collection.find(
         and(
-          equal("v5", value_v5), 
-          equal("v6", value_v6)
+          equal("_b", value_v38_b)
         )
       )
 
@@ -43,7 +42,7 @@ object LiteratureType:
         },
         (e: Throwable) => {println(s"Error: $e")},
         () => { 
-          this.is_literature_type_valid_cache += cache_key -> is_valid
+          this.is_descriptive_code_valid_cache += cache_key -> is_valid
         }
       )
       Await.ready(docs.toFuture, 30.seconds)

@@ -1,8 +1,12 @@
 package transform
+import transform.Base_Reference
 import mysql.Fiadmin
 import mongo.LiteratureType
+import mongo.DescriptiveInfo
 import config.Settings
 import java.time._
+import java.text.SimpleDateFormat
+import java.text.ParseException
 import org.mongodb.scala.bson.collection.mutable.Document
 import org.bson.BsonString
 import scribe.Logger
@@ -11,17 +15,15 @@ import scribe.Logger
 /**
   * Transforms data into the Biblioref.reference model standard
   */
-class Reference():
+class Reference extends Base_Reference:
     val logger = Logger("biblioref.reference")
 
-    var doc: Document = _
-
-    var fields: Document = Document(
-      "BIREME_reviewed" -> false,
-      "status" -> -3,
-      "created_by" -> 2
+    fields = Document(
+      "BIREME_reviewed" -> Settings.getConf("BIREME_REVIEWED").toBoolean,
+      "status" -> Settings.getConf("STATUS").toInt,
+      "created_by" -> Settings.getConf("CREATED_BY").toInt
     )
-    var new_doc: Document = Document(
+    new_doc = Document(
       "model" -> "biblioref.reference"
     )
 
@@ -39,7 +41,6 @@ class Reference():
         return null
       }
 
-      this.set_id()
       this.set_pk(pk)
       this.set_created_updated_datetime()
 
@@ -49,19 +50,24 @@ class Reference():
       this.transform_indexed_database()
       this.transform_lilacs_indexed()
       this.transform_interoperability_source()
-      this.transform_text_language()
-      this.transform_publication_type()
       this.transform_check_tags()
-      this.transform_type_of_computer_file()
-      this.transform_type_of_cartographic_material()
-      this.transform_type_of_journal()
-      this.transform_type_of_visual_material()
-      this.transform_specific_designation_of_the_material()
-
-      this.set_field_as_string("record_type", "9")
+      this.transform_electronic_address()
+      this.transform_abstract()
+      this.transform_author_keyword()
+      this.transform_publication_date_normalized()
+      this.transform_descriptive_information()
+      
+      this.transform_field("type_of_computer_file", "111")
+      this.transform_field("type_of_cartographic_material", "112")
+      this.transform_field("type_of_journal", "113")
+      this.transform_field("type_of_visual_material", "114")
+      this.transform_field("specific_designation_of_the_material", "115")
+      this.transform_field("record_type", "9")
+      this.transform_field("publication_type", "71")
+      this.transform_field("text_language", "40")
+      
       this.set_field_as_string("internal_note", "61")
       this.set_field_as_string("publication_date", "64")
-      this.set_field_as_string("publication_date_normalized", "65")
       this.set_field_as_string("total_number_of_references", "72")
       this.set_field_as_string("time_limits_from", "74")
       this.set_field_as_string("time_limits_to", "75")
@@ -75,21 +81,11 @@ class Reference():
       this.set_field_as_string("institution_as_subject", "610")
       this.set_field_as_string("software_version", "899")
       
-      this.set_field_as_document("electronic_address", "8")
-      this.set_field_as_document("descriptive_information", "38")
       this.set_field_as_document("non_decs_region", "82")
-      this.set_field_as_document("abstract", "83")
-      this.set_field_as_document("author_keyword", "85")
       this.set_field_as_document("local_descriptors", "653")
 
       this.new_doc += ("fields", this.fields)
       return this.new_doc
-    
-    /**
-      * Sets this projects ID
-      */
-    def set_id() =
-      this.new_doc += ("_id", this.doc.get("_id"))
 
     /**
       * Sets BIREME's primary key
@@ -107,82 +103,6 @@ class Reference():
       val tz_datetime = ZonedDateTime.now().toString()
       this.fields.put("created_time", tz_datetime)
       this.fields.put("updated_time", tz_datetime)
-
-    /**
-      * Sets simple string fields
-      *
-      * @param name FI-Admin field name
-      * @param key ISIS field number
-      */
-    def set_field_as_string(name: String, key: String) =
-      if (this.doc.keySet.contains(key) == true) {
-        if (this.doc.get(key).get.isArray()) {
-          this.fields.put(name, this.doc.get(key).get)
-        } else {
-          this.fields.put(name, this.doc.get(key).get.asDocument().getString("text").getValue().trim())
-        }
-      }
-
-    /**
-      * Sets complex fields as JSON
-      *
-      * @param name FI-Admin field name
-      * @param key ISIS field number
-      */
-    def set_field_as_document(name: String, key: String) =
-      if (this.doc.keySet.contains(key) == true) {
-        if (this.doc.get(key).get.isArray()) {
-          this.fields.put(name, this.doc.get(key).get)
-        } else {
-          this.fields.put(name, this.doc.get(key).get.asDocument())
-        }
-      }
-
-    /**
-      * Provided an ISIS field number (key), gets its first occurence as string
-      *
-      * @param key ISIS field number
-      * @return field value
-      */
-    def get_first_value(key: String): String =
-      var field_value: String = ""
-
-      if (this.doc.keySet.contains(key) == true) {
-        if (this.doc.get(key).get.isArray()) {
-          this.doc.get(key).get.asArray().forEach(row =>
-            val occ_value = row.asDocument().getString("text", BsonString("")).getValue().trim()
-            if (occ_value != "") {
-              field_value = occ_value
-            }
-          )
-        } else {
-          field_value = this.doc.get(key).get.asDocument().getString("text", BsonString("")).getValue().trim()
-        }
-      }
-
-      return field_value
-
-    /**
-      * Provided an ISIS field number (key), gets all occurences as Array
-      *
-      * @param key ISIS field number
-      * @return field value
-      */
-    def get_all_values(key: String): List[String] =
-      var field_values: List[String] = List()
-
-      if (this.doc.keySet.contains(key) == true) {
-        if (this.doc.get(key).get.isArray()) {
-          this.doc.get(key).get.asArray().forEach(row =>
-            val occ_value = row.asDocument().getString("text", BsonString("")).getValue().trim()
-            field_values = field_values :+ occ_value
-          )
-        } else {
-          field_values = field_values :+ this.doc.get(key).get.asDocument().getString("text", BsonString("")).getValue().trim()
-        }
-      }
-
-      return field_values
 
     /**
       * Transforms the "literature_type" and "treatment_level" fields for FI-Admin.
@@ -207,87 +127,108 @@ class Reference():
       return is_valid
 
     /**
-      * Transforms the "type_of_computer_file" field for FI-Admin.
-      * Simply adds the content of the field v111 as is and issues
+      * Generic transformer for a Fi-Admin field.
+      * Simply adds the content of the field isis_field as is and issues
       * a warning if the code is not available in FI-Admin's MySQL database
       */
-    def transform_type_of_computer_file() =
-      this.set_field_as_string("type_of_computer_file", "111")
+    def transform_field(fiadmin_field: String, isis_field: String) =
+      this.set_field_as_string(fiadmin_field, isis_field)
 
-      val values_v111 = get_all_values("111")
+      val values = get_all_values(isis_field)
       val value_v2 = get_first_value("2")
-      values_v111.foreach(value_v111 =>
-        val is_valid = Fiadmin.is_code_valid(value_v111, "type_of_computer_file")
+      values.foreach(value =>
+        val is_valid = Fiadmin.is_code_valid(value, fiadmin_field)
         if (!is_valid) {
-          logger.warn(s"biblioref.reference;$value_v2;v111;Not found in FI Admin - $value_v111")
+          logger.warn(s"biblioref.reference;$value_v2;v$isis_field;Not found in FI Admin - $value")
         }
       )
 
     /**
-      * Transforms the "type_of_cartographic_material" field for FI-Admin.
-      * Simply adds the content of the field v112 as is and issues
-      * a warning if the code is not available in FI-Admin's MySQL database
+      * Transforms the "descriptive_information" field for FI-Admin.
+      * Simply adds the content of the field v38 as is and issues
+      * a warning if the code is not available in MongoDB database
+      * for the subfield _b
       */
-    def transform_type_of_cartographic_material() =
-      this.set_field_as_string("type_of_cartographic_material", "112")
+    def transform_descriptive_information() =
+      this.set_field_as_document("descriptive_information", "38")
 
-      val values_v112 = get_all_values("112")
       val value_v2 = get_first_value("2")
-      values_v112.foreach(value_v112 =>
-        val is_valid = Fiadmin.is_code_valid(value_v112, "type_of_cartographic_material")
+      val values_v38_b = get_all_values("38", "_b")
+      values_v38_b.foreach(value_v38_b =>
+        val is_valid = DescriptiveInfo.is_descriptive_code_valid(value_v38_b)
         if (!is_valid) {
-          logger.warn(s"biblioref.reference;$value_v2;v112;Not found in FI Admin - $value_v112")
+          logger.warn(s"biblioref.reference;$value_v2;v38_b;Invalid v38_b - $value_v38_b")
         }
       )
 
     /**
-      * Transforms the "type_of_journal" field for FI-Admin.
-      * Simply adds the content of the field v113 as is and issues
+      * Transforms the "abstract" field for FI-Admin.
+      * Simply adds the content of the field v83 as is and issues
       * a warning if the code is not available in FI-Admin's MySQL database
+      * for the subfield _i
       */
-    def transform_type_of_journal() =
-      this.set_field_as_string("type_of_journal", "113")
+    def transform_abstract() =
+      this.set_field_as_document("abstract", "83")
 
-      val values_v113 = get_all_values("113")
       val value_v2 = get_first_value("2")
-      values_v113.foreach(value_v113 =>
-        val is_valid = Fiadmin.is_code_valid(value_v113, "type_of_journal")
+      val values_v83_i = get_all_values("83", "_i")
+      values_v83_i.foreach(value_v83_i =>
+        val is_valid = Fiadmin.is_code_valid(value_v83_i, "text_language")
         if (!is_valid) {
-          logger.warn(s"biblioref.reference;$value_v2;v113;Not found in FI Admin - $value_v113")
+          logger.warn(s"biblioref.reference;$value_v2;v83_i;Not found in FI Admin - $value_v83_i")
         }
       )
 
     /**
-      * Transforms the "type_of_visual_material" field for FI-Admin.
-      * Simply adds the content of the field v114 as is and issues
+      * Transforms the "author_keyword" field for FI-Admin.
+      * Simply adds the content of the field v85 as is and issues
       * a warning if the code is not available in FI-Admin's MySQL database
+      * for the subfield _i
       */
-    def transform_type_of_visual_material() =
-      this.set_field_as_string("type_of_visual_material", "114")
+    def transform_author_keyword() =
+      this.set_field_as_document("author_keyword", "85")
 
-      val values_v114 = get_all_values("114")
       val value_v2 = get_first_value("2")
-      values_v114.foreach(value_v114 =>
-        val is_valid = Fiadmin.is_code_valid(value_v114, "type_of_visual_material")
+      val values_v85_i = get_all_values("85", "_i")
+      values_v85_i.foreach(value_v85_i =>
+        val is_valid = Fiadmin.is_code_valid(value_v85_i, "text_language")
         if (!is_valid) {
-          logger.warn(s"biblioref.reference;$value_v2;v114;Not found in FI Admin - $value_v114")
+          logger.warn(s"biblioref.reference;$value_v2;v85_i;Not found in FI Admin - $value_v85_i")
         }
       )
 
     /**
-      * Transforms the "specific_designation_of_the_material" field for FI-Admin.
-      * Simply adds the content of the field v115 as is and issues
+      * Transforms the "electronic_address" field for FI-Admin.
+      * Simply adds the content of the field v8 as is and issues
       * a warning if the code is not available in FI-Admin's MySQL database
+      * for the subfields _i, _q and _y
       */
-    def transform_specific_designation_of_the_material() =
-      this.set_field_as_string("specific_designation_of_the_material", "115")
+    def transform_electronic_address() =
+      this.set_field_as_document("electronic_address", "8")
 
-      val values_v115 = get_all_values("115")
       val value_v2 = get_first_value("2")
-      values_v115.foreach(value_v115 =>
-        val is_valid = Fiadmin.is_code_valid(value_v115, "specific_designation_of_the_material")
+
+      val values_v8_i = get_all_values("8", "_i")
+      values_v8_i.foreach(value_v8_i =>
+        val is_valid = Fiadmin.is_code_valid(value_v8_i, "text_language")
         if (!is_valid) {
-          logger.warn(s"biblioref.reference;$value_v2;v115;Not found in FI Admin - $value_v115")
+          logger.warn(s"biblioref.reference;$value_v2;v8_i;Not found in FI Admin - $value_v8_i")
+        }
+      )
+
+      val values_v8_q = get_all_values("8", "_q")
+      values_v8_q.foreach(value_v8_q =>
+        val is_valid = Fiadmin.is_code_valid(value_v8_q, "electronic_address_q")
+        if (!is_valid) {
+          logger.warn(s"biblioref.reference;$value_v2;v8_q;Not found in FI Admin - $value_v8_q")
+        }
+      )
+
+      val values_v8_y = get_all_values("8", "_y")
+      values_v8_y.foreach(value_v8_y =>
+        val is_valid = Fiadmin.is_code_valid(value_v8_y, "electronic_address_y")
+        if (!is_valid) {
+          logger.warn(s"biblioref.reference;$value_v2;v8_y;Not found in FI Admin - $value_v8_y")
         }
       )
 
@@ -307,41 +248,30 @@ class Reference():
           logger.warn(s"biblioref.reference;$value_v2;v76;Not found in FI Admin - $value_v76")
         }
       )
-
-    /**
-      * Transforms the "publication_type" field for FI-Admin.
-      * Simply adds the content of the field v71 as is and issues
-      * a warning if the code is not available in FI-Admin's MySQL database
-      */
-    def transform_publication_type() =
-      this.set_field_as_string("publication_type", "71")
-
-      val values_v71 = get_all_values("71")
-      val value_v2 = get_first_value("2")
-      values_v71.foreach(value_v71 =>
-        val is_valid = Fiadmin.is_code_valid(value_v71, "publication_type")
-        if (!is_valid) {
-          logger.warn(s"biblioref.reference;$value_v2;v71;Not found in FI Admin - $value_v71")
-        }
-      )
-
-    /**
-      * Transforms the "text_language" field for FI-Admin.
-      * Simply adds the content of the field v40 as is and issues
-      * a warning if the code is not available in FI-Admin's MySQL database
-      */
-    def transform_text_language() =
-      this.set_field_as_string("text_language", "40")
-
-      val values_v40 = get_all_values("40")
-      val value_v2 = get_first_value("2")
-      values_v40.foreach(value_v40 =>
-        val is_valid = Fiadmin.is_code_valid(value_v40, "text_language")
-        if (!is_valid) {
-          logger.warn(s"biblioref.reference;$value_v2;v40;Not found in FI Admin - $value_v40")
-        }
-      )
     
+    /**
+      * Transforms the "publication_date_normalized" field for FI-Admin.
+      * Simply adds the content of the field v1 as is and issues
+      * a warning if the code is not available in FI-Admin's MySQL database
+      */
+    def transform_publication_date_normalized() =
+      this.set_field_as_string("publication_date_normalized", "65")
+
+      val values_v65 = get_all_values("65")
+      val value_v2 = get_first_value("2")
+      values_v65.foreach(value_v65 =>
+        if (value_v65.length == 8) {
+          val format = new SimpleDateFormat("yyyyMMdd")
+          try {
+            format.parse(value_v65)
+          } catch  {
+            case e: ParseException => logger.warn(s"biblioref.reference;$value_v2;v65;Invalid date - $value_v65")
+          }
+        } else {
+          logger.warn(s"biblioref.reference;$value_v2;v65;Length different than 8 - $value_v65")
+        }
+      )
+
     /**
       * Transforms the "cooperative_center_code" field for FI-Admin.
       * Simply adds the content of the field v1 as is and issues
@@ -402,6 +332,18 @@ class Reference():
         val values_v4 = get_all_values("4")
         if (values_v4.contains("LILACS")) {
           field_value = true
+        }
+      }
+
+      if (field_value) {
+        val value_v65 = get_first_value("65")
+        if (value_v65 != "") {
+          val year = value_v65.substring(0, 4).toInt
+          if (year < 1985) {
+            field_value = false
+          }
+        } else {
+          field_value = false
         }
       }
 
@@ -502,8 +444,8 @@ class Reference():
         if (code != null) {
           indexed_databases = indexed_databases :+ code
         } else {
-          val value_v2 = get_first_value("2")
-          logger.warn(s"biblioref.reference;$value_v2;v4;Not found in FI Admin - $value_v4")
+          //val value_v2 = get_first_value("2")
+          //logger.warn(s"biblioref.reference;$value_v2;v4;Not found in FI Admin - $value_v4")
         }
       )
 
