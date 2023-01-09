@@ -62,7 +62,7 @@ object Fiadmin:
   def is_code_valid(code: String, field: String): Boolean =
     var is_code_valid: Boolean = false
 
-    val cache_key = "$field$code"
+    val cache_key = s"$field$code"
     if (this.is_code_valid_cache.contains(cache_key)) {
       is_code_valid = this.is_code_valid_cache(cache_key)
     } else {
@@ -80,6 +80,36 @@ object Fiadmin:
       }
     }
     return is_code_valid
+
+  /**
+    * Queries the Fi-Admin MySQL database for evidence if the 
+    * Country Code is valid.
+    * Each request is cached for optimization.
+    *
+    * @param country_code
+    * @return if the Country Code is valid
+    */
+  var get_country_code_cache: Map[String, String] = Map()
+  def get_country_code(country: String): String =
+    var id: String = null
+
+    if (this.get_country_code_cache.contains(country)) {
+      id = this.get_country_code_cache(country)
+    } else {
+      try {
+        val statement = this.connection.createStatement
+        val rs = statement.executeQuery(
+          s"select code from utils_country left join utils_countrylocal on utils_country.id=country_id where utils_country.name='$country' OR utils_countrylocal.name='$country'"
+        )
+        while (rs.next) {
+          id = rs.getString("code")
+        }
+        this.get_country_code_cache += country -> id
+      } catch {
+        case e: Exception => e.printStackTrace
+      }
+    }
+    return id
 
   /**
     * Queries the Fi-Admin MySQL database for evidence if the 

@@ -1,8 +1,6 @@
 import isis.IsisDB
 import mongo.MongoDB
 import transform.Transformer
-import scala.concurrent.*
-import scala.concurrent.duration.*
 
 
 @main def main =
@@ -11,6 +9,7 @@ import scala.concurrent.duration.*
     .clearModifiers()
     .replace()
 
+  /*
   val database = IsisDB()
   database.mount_mst()
   val documents = database.parse_data()
@@ -21,8 +20,8 @@ import scala.concurrent.duration.*
   mongodb.drop_collection()
   mongodb.set_collection("01_isiscopy")
   mongodb.insert_documents(documents)
+  Thread.sleep(10000)*/
 
-  var transformer = Transformer()
-  transformer.create_biblioref_reference()
+  Transformer.transform_docs()
 
   Thread.sleep(50000)
