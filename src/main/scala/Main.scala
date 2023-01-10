@@ -9,6 +9,7 @@ import transform.Transformer
     .clearModifiers()
     .replace()
 
+  /*
   val database = IsisDB()
   database.mount_mst()
   val documents = database.parse_data()
@@ -20,6 +21,7 @@ import transform.Transformer
   mongodb.set_collection("01_isiscopy")
   mongodb.insert_documents(documents)
   Thread.sleep(10000)
+  */
 
   Transformer.transform_docs()
 

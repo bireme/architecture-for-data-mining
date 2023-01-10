@@ -2,7 +2,7 @@ package transform
 import transform.Base_Reference
 import mysql.Fiadmin
 import org.mongodb.scala.bson.collection.mutable.Document
-import org.bson.BsonNull
+import org.bson._
 import scribe.Logger
 
 
@@ -115,10 +115,11 @@ class Reference_Analytic extends Base_Reference:
       * for the subfield _r and _p
       */
     def transform_individual_author() =
-      var values_v10 = get_all_values("10")
-      if (values_v10.length > 0) {
+      var values_v10 = get_all_values_as_document("10")
+      if (values_v10.size > 0) {
         val value_v2 = get_first_value("2")
 
+        /* Dealing with _r subfield */
         var values = get_all_values("10", "_r")
         values.foreach(value =>
           val is_valid = Fiadmin.is_code_valid(value, "degree_of_responsibility")
@@ -127,15 +128,24 @@ class Reference_Analytic extends Base_Reference:
           }
         )
 
-        values = get_all_values("10", "_p")
-        var country_code: String = null
-        values.foreach(value =>
-          country_code = Fiadmin.get_country_code(value)
-          if (country_code == null) {
-            logger.warn(s"biblioref.referenceanalytic;$value_v2;v10_p;Not found in FI Admin - $value")
-          } else {
-            values_v10 = values_v10.map { case value => country_code; case x => x }
+        /* Dealing with _p subfield and replacing the country name by its country code */
+        var i = 0;
+        values_v10.toArray.foreach(value =>
+          var value_doc = value.asInstanceOf[BsonDocument]
+          if (value_doc.keySet.contains("_p") == true) {
+            val value_v10_p = value_doc.get("_p").asString.getValue().trim()
+            if (value_v10_p != "") {
+              val country_code = Fiadmin.get_country_code(value_v10_p)
+              if (country_code == null) {
+                logger.warn(s"biblioref.referenceanalytic;$value_v2;v10_p;Not found in FI Admin - $value")
+              } else {
+                value_doc.remove("_p")
+                value_doc.put("_p", BsonString(country_code))
+                values_v10.set(i, value_doc)
+              }
+            }
           }
+          i += 1
         )
         
         this.fields.put("individual_author", values_v10)
