@@ -1,7 +1,9 @@
 package transform
 import mysql.Fiadmin
 import org.mongodb.scala.bson.collection.mutable.Document
-import org.bson.BsonString
+import org.bson._
+import scala.collection.JavaConverters._
+import org.mongodb.scala.ObservableFuture
 
 
 /**
@@ -92,3 +94,21 @@ class Base_Reference():
     }
 
     return field_values
+
+  /**
+    * Provided an ISIS field number (key), gets all occurences as Array of Documents
+    *
+    * @param key ISIS field number
+    * @return field value
+    */
+  def get_all_values_as_document(key: String): BsonArray =
+    if (this.doc.keySet.contains(key) == true) {
+      if (this.doc.get(key).get.isArray()) {
+        return this.doc.get(key).get.asArray
+      } else {
+        var new_value = BsonArray()
+        new_value.add(this.doc.get(key).get.asDocument)
+        return new_value
+      }
+    }
+    return BsonArray()

@@ -3,6 +3,7 @@ import config.Settings
 import mongo.MongoDB
 import transform.Reference
 import transform.Reference_Analytic
+import transform.Reference_Source
 import scala.concurrent.*
 import scala.concurrent.duration.*
 import scala.io.Source
@@ -51,6 +52,10 @@ object Transformer:
     .withHandler(writer = FileWriter("logs" / "biblioref.referenceanalytic.log"))
     .replace()
 
+    Logger("biblioref.referencesource")
+    .withHandler(writer = FileWriter("logs" / "biblioref.referencesource.log"))
+    .replace()
+
   /**
     * Init Fi-Admin's next id based on the last ID in their search index
     */
@@ -83,16 +88,22 @@ object Transformer:
       (doc: Document) => {
         val reference = Reference()
         val referenceanalytic = Reference_Analytic()
+        val referencesource = Reference_Source()
 
         val reference_doc = reference.transform(doc, this.fiadmin_nextid)
         val referenceanalytic_doc = referenceanalytic.transform(doc, this.fiadmin_nextid)
+        val referencesource_doc = referencesource.transform(doc, this.fiadmin_nextid)
 
         if (reference_doc != null) {
           var merged_doc = Document(
             "reference" -> reference_doc
           )
+
           if (referenceanalytic_doc != null) {
             merged_doc.put("referenceanalytic", referenceanalytic_doc)
+          }
+          if (referencesource_doc != null) {
+            merged_doc.put("referencesource", referencesource_doc)
           }
 
           this.mongodb_transformed.insert_document(merged_doc)
