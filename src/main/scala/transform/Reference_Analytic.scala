@@ -14,8 +14,7 @@ class Reference_Analytic extends Base_Reference:
 
     fields = Document()
     new_doc = Document(
-      "model" -> "biblioref.referenceanalytic",
-      "pk" -> BsonNull()
+      "model" -> "biblioref.referenceanalytic"
     )
 
     /**
@@ -28,7 +27,9 @@ class Reference_Analytic extends Base_Reference:
       this.doc = doc
       val value_v6 = get_first_value("6")
       if (value_v6.contains("a")) {
-        this.set_source(pk)
+        // This should be the first Analytic PK, the one from the same referencesource
+        //this.set_source(pk)
+        this.set_pk(pk)
 
         this.set_field_as_string("english_translated_title", "13")
         this.set_field_as_string("doi_number", "724")
@@ -46,18 +47,20 @@ class Reference_Analytic extends Base_Reference:
         return null
       }
     
+    //def set_source(pk: Int) =
+      //this.fields.put("source", pk)
+
     /**
-      * Sets BIREME's primary key in source field
+      * Sets BIREME's primary key
       *
       * @param pk
       */
-    def set_source(pk: Int) =
-      this.fields.put("source", pk)
-
+    def set_pk(pk: Int) =
+      this.new_doc += ("pk", pk)
     
     /**
       * Transforms the "clinical_trial_registry_name" field for FI-Admin.
-      * Simply adds the content of the field isis_field as is and issues
+      * Simply adds the content of the field v700 as is and issues
       * a warning if the code is not available in FI-Admin's MySQL database
       */
     def transform_clinical_trial_registry_name() =
@@ -74,7 +77,7 @@ class Reference_Analytic extends Base_Reference:
 
     /**
       * Transforms the "title" field for FI-Admin.
-      * Simply adds the content of the field v83 as is and issues
+      * Simply adds the content of the field v12 as is and issues
       * a warning if the code is not available in FI-Admin's MySQL database
       * for the subfield _i
       */
@@ -86,13 +89,13 @@ class Reference_Analytic extends Base_Reference:
       values.foreach(value =>
         val is_valid = Fiadmin.is_code_valid(value, "text_language")
         if (!is_valid) {
-          logger.warn(s"biblioref.referenceanalytic;$value_v2;v83_i;Not found in FI Admin - $value")
+          logger.warn(s"biblioref.referenceanalytic;$value_v2;v12_i;Not found in FI Admin - $value")
         }
       )
     
     /**
       * Transforms the "corporate_author" field for FI-Admin.
-      * Simply adds the content of the field v83 as is and issues
+      * Simply adds the content of the field v11 as is and issues
       * a warning if the code is not available in FI-Admin's MySQL database
       * for the subfield _r
       */
@@ -110,7 +113,7 @@ class Reference_Analytic extends Base_Reference:
 
     /**
       * Transforms the "individual_author" field for FI-Admin.
-      * Simply adds the content of the field v83 as is and issues
+      * Simply adds the content of the field v10 as is and issues
       * a warning if the code is not available in FI-Admin's MySQL database
       * for the subfield _r and _p
       */
