@@ -1,9 +1,7 @@
 package transform
 import config.Settings
 import mongo.MongoDB
-import transform.Reference
-import transform.Reference_Analytic
-import transform.Reference_Source
+import transform._
 import scala.concurrent.*
 import scala.concurrent.duration.*
 import scala.io.Source
@@ -56,6 +54,18 @@ object Transformer:
     .withHandler(writer = FileWriter("logs" / "biblioref.referencesource.log"))
     .replace()
 
+    Logger("biblioref.referencecomplement")
+    .withHandler(writer = FileWriter("logs" / "biblioref.referencecomplement.log"))
+    .replace()
+
+    Logger("biblioref.referencelocal")
+    .withHandler(writer = FileWriter("logs" / "biblioref.referencelocal.log"))
+    .replace()
+
+    Logger("main.descriptor")
+    .withHandler(writer = FileWriter("logs" / "main.descriptor.log"))
+    .replace()
+
   /**
     * Init Fi-Admin's next id based on the last ID in their search index
     */
@@ -78,7 +88,11 @@ object Transformer:
     // Unique index
     val indexOptions = IndexOptions().unique(true)
     this.mongodb_transformed.collection.createIndex(Indexes.ascending("reference.pk"), indexOptions)
-    this.mongodb_transformed.collection.createIndex(Indexes.ascending("referenceanalytic.fields.source"), indexOptions)
+    this.mongodb_transformed.collection.createIndex(Indexes.ascending("referenceanalytic.pk"), indexOptions)
+    this.mongodb_transformed.collection.createIndex(Indexes.ascending("referencesource.pk"), indexOptions)
+    this.mongodb_transformed.collection.createIndex(Indexes.ascending("referencecomplement.fields.source"), indexOptions)
+    this.mongodb_transformed.collection.createIndex(Indexes.ascending("referencelocal.fields.source"), indexOptions)
+    this.mongodb_transformed.collection.createIndex(Indexes.ascending("descriptor.fields.object_id"), indexOptions)
 
   /**
     * Transforms all the ISIS docs into all Fi-Admin's models
@@ -89,10 +103,16 @@ object Transformer:
         val reference = Reference()
         val referenceanalytic = Reference_Analytic()
         val referencesource = Reference_Source()
+        val referencecomplement = Reference_Complement()
+        val referencelocal = Reference_Local()
+        val descriptor = Descriptor()
 
         val reference_doc = reference.transform(doc, this.fiadmin_nextid)
         val referenceanalytic_doc = referenceanalytic.transform(doc, this.fiadmin_nextid)
         val referencesource_doc = referencesource.transform(doc, this.fiadmin_nextid)
+        val referencecomplement_doc = referencecomplement.transform(doc, this.fiadmin_nextid)
+        val referencelocal_doc = referencelocal.transform(doc, this.fiadmin_nextid)
+        val descriptor_docs = descriptor.transform(doc, this.fiadmin_nextid)
 
         if (reference_doc != null) {
           var merged_doc = Document(
@@ -104,6 +124,15 @@ object Transformer:
           }
           if (referencesource_doc != null) {
             merged_doc.put("referencesource", referencesource_doc)
+          }
+          if (referencecomplement_doc != null) {
+            merged_doc.put("referencecomplement", referencecomplement_doc)
+          }
+          if (referencelocal_doc != null) {
+            merged_doc.put("referencelocal", referencelocal_doc)
+          }
+          if (descriptor_docs != null) {
+            merged_doc.put("descriptor", descriptor_docs)
           }
 
           this.mongodb_transformed.insert_document(merged_doc)

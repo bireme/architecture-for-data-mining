@@ -443,9 +443,6 @@ class Reference extends Base_Reference:
         val code = Fiadmin.get_database_id(value_v4)
         if (code != null) {
           indexed_databases = indexed_databases :+ code
-        } else {
-          //val value_v2 = get_first_value("2")
-          //logger.warn(s"biblioref.reference;$value_v2;v4;Not found in FI Admin - $value_v4")
         }
       )
 

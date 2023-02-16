@@ -110,6 +110,36 @@ object Fiadmin:
       }
     }
     return id
+    
+  /**
+    * Queries the Fi-Admin MySQL database for evidence if the 
+    * Country Code is valid.
+    * Each request is cached for optimization.
+    *
+    * @param country_code
+    * @return if the Country Code is valid
+    */
+  var is_country_code_valid_cache: Map[String, Boolean] = Map()
+  def is_country_code_valid(country_code: String): Boolean =
+    var is_country_valid: Boolean = false
+
+    if (this.is_country_code_valid_cache.contains(country_code)) {
+      is_country_valid = this.is_country_code_valid_cache(country_code)
+    } else {
+      try {
+        val statement = this.connection.createStatement
+        val rs = statement.executeQuery(
+          s"select id from utils_country where code='$country_code'"
+        )
+        while (rs.next) {
+          is_country_valid = true
+        }
+        this.is_country_code_valid_cache += country_code -> is_country_valid
+      } catch {
+        case e: Exception => e.printStackTrace
+      }
+    }
+    return is_country_valid
 
   /**
     * Queries the Fi-Admin MySQL database for evidence if the 
