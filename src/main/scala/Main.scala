@@ -1,6 +1,7 @@
 import isis.IsisDB
 import mongo.MongoDB
 import transform.Transformer
+//import org.bireme.dcdup.DoubleCheckDuplicated
 
 
 @main def main =
@@ -24,5 +25,16 @@ import transform.Transformer
   */
 
   Transformer.transform_docs()
+  /*DoubleCheckDuplicated.doubleCheck(
+    "/home/ubuntu/architecture-for-data-mining/temp/in.pipe",
+    "UTF-8",
+    "/home/ubuntu/architecture-for-data-mining/data/Dedup/indexes/lilacs_Sas",
+    "/home/ubuntu/architecture-for-data-mining/data/Dedup/configs/configLILACS_Sas_Seven.cfg",
+    "UTF-8",
+    "/home/ubuntu/architecture-for-data-mining/temp/out1",
+    "/home/ubuntu/architecture-for-data-mining/temp/out2",
+    "/home/ubuntu/architecture-for-data-mining/temp/outno1",
+    "/home/ubuntu/architecture-for-data-mining/temp/outno2"
+  )*/
 
   Thread.sleep(50000)

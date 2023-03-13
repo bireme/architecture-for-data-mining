@@ -8,7 +8,7 @@ lazy val root = project
 
     scalaVersion := scala3Version,
 
-    scalacOptions += "-deprecation",
+    exportJars := true,
 
     libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
     libraryDependencies += ("org.mongodb.scala" %% "mongo-scala-driver" % "4.7.2").cross(CrossVersion.for3Use2_13),

@@ -110,7 +110,104 @@ object Fiadmin:
       }
     }
     return id
-    
+
+  /**
+    * Queries the Fi-Admin MySQL database for evidence if the 
+    * Qualifier DeCS Code exists.
+    * Each request is cached for optimization.
+    *
+    * @param qualifier
+    * @return ID and DeCS qualifier version
+    */
+  var get_decs_qualifier_cache: Map[String, List[String]] = Map()
+  def get_decs_qualifier(qualifier: String): List[String] =
+    var result: List[String] = null
+
+    if (this.get_decs_qualifier_cache.contains(qualifier)) {
+      result = this.get_decs_qualifier_cache(qualifier)
+    } else {
+      try {
+        val statement = this.connection.createStatement
+        val rs = statement.executeQuery(
+          s"""
+          SELECT 
+            a.`term_string`,
+            c.`decs_code`
+          FROM 
+            `thesaurus_termlistqualif` AS a,
+            `thesaurus_identifierconceptlistqualif` AS b,
+            `thesaurus_identifierqualif` AS c 
+          WHERE 
+            a.`language_code` = 'ES' AND 
+            a.`term_thesaurus` = '1' AND
+            a.`concept_preferred_term` = 'Y' AND 
+            a.`record_preferred_term`= 'Y' AND
+            a.`identifier_concept_id` = b.`id` AND
+            b.`preferred_concept`= 'Y' AND 
+            b.`identifier_id`= c.id AND 
+            LENGTH(c.`decs_code`) = '5' AND 
+            a.`entry_version` = '$qualifier'
+          LIMIT 1
+          """
+        )
+        while (rs.next) {
+          val id = "^s" + rs.getString("decs_code")
+          val decs_qualifier = rs.getString("term_string")
+          result = List(id, decs_qualifier)
+        }
+        this.get_decs_qualifier_cache += qualifier -> result
+      } catch {
+        case e: Exception => e.printStackTrace
+      }
+    }
+    return result
+
+  /**
+    * Queries the Fi-Admin MySQL database for evidence if the 
+    * DeCS Descriptor Code exists.
+    * Each request is cached for optimization.
+    *
+    * @param descriptor
+    * @return ID and DeCS descriptor version
+    */
+  var get_decs_descriptor_cache: Map[String, String] = Map()
+  def get_decs_descriptor(descriptor: String): String =
+    var id: String = ""
+
+    if (this.get_decs_descriptor_cache.contains(descriptor)) {
+      id = this.get_decs_descriptor_cache(descriptor)
+    } else {
+      try {
+        val statement = this.connection.createStatement
+        val rs = statement.executeQuery(
+          s"""
+          SELECT 
+            c.decs_code 
+          FROM 
+            thesaurus_termlistdesc AS a, 
+            thesaurus_identifierconceptlistdesc AS b, 
+            thesaurus_identifierdesc AS c 
+          WHERE 
+            a.term_thesaurus = '1' AND 
+            a.concept_preferred_term = 'Y' AND 
+            a.record_preferred_term= 'Y' AND 
+            a.identifier_concept_id = b.id AND 
+            b.preferred_concept= 'Y' AND 
+            b.identifier_id= c.id AND 
+            a.term_string = '$descriptor'
+          LIMIT 1
+          """
+        )
+        while (rs.next) {
+          val id = "^d" + rs.getString("decs_code")
+        }
+        this.get_decs_descriptor_cache += descriptor -> id
+      } catch {
+        case e: Exception => e.printStackTrace
+      }
+    }
+    return id
+
   /**
     * Queries the Fi-Admin MySQL database for evidence if the 
     * Country Code is valid.
