@@ -32,7 +32,7 @@ object Transformer:
   var mongodb_isiscopy = MongoDB()
   mongodb_isiscopy.connect()
   mongodb_isiscopy.set_collection("01_isiscopy")
-  var docs = mongodb_isiscopy.collection.find()    
+  var docs = mongodb_isiscopy.collection.find()
 
   this.init_loggers()
   this.init_fiadmin_nextid()
@@ -98,6 +98,7 @@ object Transformer:
     * Transforms all the ISIS docs into all Fi-Admin's models
     */
   def transform_docs() =
+    var processing = true
     this.docs.subscribe(
       (doc: Document) => {
         val reference = Reference()
@@ -140,6 +141,8 @@ object Transformer:
         }
       },
       (e: Throwable) => {println(s"Error: $e")},
-      () => {println("Done")}
+      () => {processing = false}
     )
-    Await.ready(this.docs.toFuture, 30.seconds)
+    while (processing) {
+      Thread.sleep(100)
+    }

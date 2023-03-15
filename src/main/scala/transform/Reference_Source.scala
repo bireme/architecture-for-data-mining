@@ -18,51 +18,51 @@ class Reference_Source extends Base_Reference:
     )
 
     /**
-      * Wrapper to transform all fields into the Biblioref.referenceanalytic model standard
+      * Wrapper to transform all fields into the Biblioref.referencesource model standard
       *
       * @param doc Document to be transformed
       * @param pk Primary Key for this document
       */
     def transform(doc: Document, pk: Int): Document =
       this.doc = doc
-      val value_v6 = get_first_value("6")
-      if (value_v6.contains("as") == false) {
-        this.set_pk(pk)
+      //val value_v6 = get_first_value("6")
+      //if (value_v6.contains("as")) {
+      this.set_pk(pk)
 
-        this.set_field_as_string("english_title_monographic", "19")
-        this.set_field_as_string("pages_monographic", "20")
-        this.set_field_as_string("volume_monographic", "21")
-        this.set_field_as_string("english_title_collection", "26")
-        this.set_field_as_string("total_number_of_volumes", "27")
-        this.set_field_as_string("volume_serial", "31")
-        this.set_field_as_string("issue_number", "32")
-        this.set_field_as_string("thesis_dissertation_institution", "50")
-        this.set_field_as_string("publisher", "62")
-        this.set_field_as_string("edition", "63")
-        this.set_field_as_string("publication_city", "66")
-        this.set_field_as_string("symbol", "68")
-        this.set_field_as_string("isbn", "69")
+      this.set_field_as_string("english_title_monographic", "19")
+      this.set_field_as_string("pages_monographic", "20")
+      this.set_field_as_string("volume_monographic", "21")
+      this.set_field_as_string("english_title_collection", "26")
+      this.set_field_as_string("total_number_of_volumes", "27")
+      this.set_field_as_string("volume_serial", "31")
+      this.set_field_as_string("issue_number", "32")
+      this.set_field_as_string("thesis_dissertation_institution", "50")
+      this.set_field_as_string("publisher", "62")
+      this.set_field_as_string("edition", "63")
+      this.set_field_as_string("publication_city", "66")
+      this.set_field_as_string("symbol", "68")
+      this.set_field_as_string("isbn", "69")
 
-        this.set_field_as_document("corporate_author_monographic", "17")
-        this.set_field_as_document("corporate_author_collection", "24")
-        this.set_field_as_document("thesis_dissertation_leader", "49")
+      this.set_field_as_document("corporate_author_monographic", "17")
+      this.set_field_as_document("corporate_author_collection", "24")
+      this.set_field_as_document("thesis_dissertation_leader", "49")
 
-        this.transform_title_monographic()
-        this.transform_title_collection()
-        this.transform_individual_author_monographic()
-        this.transform_individual_author_collection()
-        this.transform_thesis_dissertation_academic_title()
-        this.transform_publication_country()
+      this.transform_title_monographic()
+      this.transform_title_collection()
+      this.transform_individual_author_monographic()
+      this.transform_individual_author_collection()
+      this.transform_thesis_dissertation_academic_title()
+      this.transform_publication_country()
 
-        // TODO:
-          // title_serial
-          // issn
+      // TODO:
+        // title_serial
+        // issn
 
-        this.new_doc += ("fields", this.fields)
-        return this.new_doc
-      } else {
+      this.new_doc += ("fields", this.fields)
+      return this.new_doc
+      /*} else {
         return null
-      }
+      }*/
     
     /**
       * Sets BIREME's primary key
