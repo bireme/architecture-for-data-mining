@@ -25,8 +25,7 @@ class Reference_Source extends Base_Reference:
       */
     def transform(doc: Document, pk: Int): Document =
       this.doc = doc
-      //val value_v6 = get_first_value("6")
-      //if (value_v6.contains("as")) {
+      
       this.set_pk(pk)
 
       this.set_field_as_string("english_title_monographic", "19")
@@ -53,16 +52,10 @@ class Reference_Source extends Base_Reference:
       this.transform_individual_author_collection()
       this.transform_thesis_dissertation_academic_title()
       this.transform_publication_country()
-
-      // TODO:
-        // title_serial
-        // issn
+      this.transform_title_serial_and_issn()
 
       this.new_doc += ("fields", this.fields)
       return this.new_doc
-      /*} else {
-        return null
-      }*/
     
     /**
       * Sets BIREME's primary key
@@ -71,6 +64,35 @@ class Reference_Source extends Base_Reference:
       */
     def set_pk(pk: Int) =
       this.new_doc += ("pk", pk)
+
+    /**
+      * Transforms the "title_serial" and "issn" fields by looking up in FI-Admin database.
+      * If not found, will push the content forward as available in the current database
+      */
+    def transform_title_serial_and_issn() =
+      var value_v30 = get_first_value("30")
+      var value_v35 = get_first_value("35")
+      
+      if (value_v30 != "" || value_v35 != "") {
+        val value_v2 = get_first_value("2")
+
+        val title_and_issn = Fiadmin.get_title_and_issn(value_v30, value_v35)
+        if (title_and_issn(0) != "") {
+          this.fields.put("title_serial", title_and_issn(0))
+        } else {
+          this.set_field_as_string("title_serial", "30")
+          
+          logger.warn(s"biblioref.referencesource;$value_v2;v30;Not found in FI Admin - $value_v30")
+        }
+
+        if (title_and_issn(1) != "") {
+          this.fields.put("issn", title_and_issn(1))
+        } else {
+          this.set_field_as_string("issn", "35")
+
+          logger.warn(s"biblioref.referencesource;$value_v2;v35;Not found in FI Admin - $value_v35")
+        }
+      }
 
     /**
       * Transforms the "publication_country" field for FI-Admin.
@@ -149,7 +171,7 @@ class Reference_Source extends Base_Reference:
 
     /**
       * Transforms the "individual_author_collection" field for FI-Admin.
-      * Simply adds the content of the field v16 as is and issues
+      * Simply adds the content of the field v23 as is and issues
       * a warning if the code is not available in FI-Admin's MySQL database
       * for the subfield _r and _p
       */

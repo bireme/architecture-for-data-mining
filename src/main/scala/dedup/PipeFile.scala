@@ -60,8 +60,10 @@ object PipeFile:
     )
 
     val writer = new BufferedWriter(
-      new OutputStreamWriter(new FileOutputStream(in_pipe_path), 
-      StandardCharsets.UTF_8)
+      new OutputStreamWriter(
+        new FileOutputStream(in_pipe_path), 
+        StandardCharsets.UTF_8
+      )
     )
     var processing = true
     docs.subscribe(
@@ -117,8 +119,10 @@ object PipeFile:
     )
 
     val writer = new BufferedWriter(
-      new OutputStreamWriter(new FileOutputStream(in_pipe_path), 
-      StandardCharsets.UTF_8)
+      new OutputStreamWriter(
+        new FileOutputStream(in_pipe_path), 
+        StandardCharsets.UTF_8
+      )
     )
     var processing = true
     docs.subscribe(
@@ -177,8 +181,10 @@ object PipeFile:
     )
 
     val writer = new BufferedWriter(
-      new OutputStreamWriter(new FileOutputStream(in_pipe_path), 
-      StandardCharsets.UTF_8)
+      new OutputStreamWriter(
+        new FileOutputStream(in_pipe_path), 
+        StandardCharsets.UTF_8
+      )
     )
     var processing = true
     docs.subscribe(
@@ -225,6 +231,61 @@ object PipeFile:
         val publication_date_normalized = get_first_value(reference_fields, "publication_date_normalized").slice(0,4)
         
         writer.write(s"sasseven|$id|$title|$title_serial|$publication_date_normalized|$volume_serial|$issue_number|$author|$pages\n")
+      },
+      (e: Throwable) => {println(s"Error: $e")},
+      () => {processing = false}
+    )
+    while (processing) {
+      Thread.sleep(100)
+    }
+    writer.close()
+
+
+  def create_sas_five_pipe(in_pipe_path : String) =
+    var docs = this.mongodb_transformed.collection.find(
+      regex("reference.fields.literature_type", "^S.*")
+    )
+
+    val writer = new BufferedWriter(
+      new OutputStreamWriter(
+        new FileOutputStream(in_pipe_path), 
+        StandardCharsets.UTF_8
+      )
+    )
+    var processing = true
+    docs.subscribe(
+      (doc: Document) => {
+        val reference = doc.get("reference").get.asDocument()
+        val reference_fields = reference.get("fields").asDocument()
+
+        var title_serial = ""
+        var volume_serial = ""
+        var issue_number = ""
+        if (doc.keySet.contains("referencesource")) {
+          val referencesource = doc.get("referencesource").get.asDocument()
+          if (referencesource != null) {
+            val referencesource_fields = referencesource.get("fields").asDocument()
+
+            title_serial = get_first_value(referencesource_fields, "title_serial")
+            volume_serial = get_first_value(referencesource_fields, "volume_serial")
+            issue_number = get_first_value(referencesource_fields, "issue_number")
+          }
+        }
+        
+        var title = ""
+        if (doc.keySet.contains("referenceanalytic")) {
+          val referenceanalytic = doc.get("referenceanalytic").get.asDocument()
+          if (referenceanalytic != null) {
+            val referenceanalytic_fields = referenceanalytic.get("fields").asDocument()
+
+            title = get_first_value(referenceanalytic_fields, "title")
+          }
+        }
+
+        val id = reference.getInt32("pk").getValue()
+        val publication_date_normalized = get_first_value(reference_fields, "publication_date_normalized").slice(0,4)
+        
+        writer.write(s"sasfive|$id|$title|$title_serial|$publication_date_normalized|$volume_serial|$issue_number\n")
       },
       (e: Throwable) => {println(s"Error: $e")},
       () => {processing = false}

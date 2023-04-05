@@ -1,9 +1,11 @@
 package dedup
 
 import java.nio.file.Paths
+import java.io.File
 
 import org.bireme.dcdup.DoubleCheckDuplicated
 import dedup.PipeFile
+import dedup.OutParser
 
 
 /**
@@ -50,16 +52,37 @@ class Deduplication():
 
   override def toString: String = in_pipe_path
 
+  def erase_in_out_files() =
+    new File(in_pipe_path).delete()
+    new File(out_dup1_path).delete()
+    new File(out_dup2_path).delete()
+    new File(out_nodup1_path).delete()
+    new File(out_nodup2_path).delete()
+
   def run() =
+    this.erase_in_out_files()
     PipeFile.create_mnt_pipe(in_pipe_path)
     this.run_dedup(index_mnt_path, conf_mnt_path)
+    OutParser.parse_mnt(out_dup2_path, true)
+    OutParser.parse_mnt(out_dup1_path, false)
 
+    this.erase_in_out_files()
     PipeFile.create_mntam_pipe(in_pipe_path)
     this.run_dedup(index_mntam_path, conf_mntam_path)
+    OutParser.parse_mntam(out_dup2_path, true)
+    OutParser.parse_mntam(out_dup1_path, false)
 
+    this.erase_in_out_files()
     PipeFile.create_sas_seven_pipe(in_pipe_path)
     this.run_dedup(index_sas_path, conf_sas_seven_path)
+    OutParser.parse_sas7(out_dup2_path, true)
+    OutParser.parse_sas7(out_dup1_path, false)
 
+    this.erase_in_out_files()
+    PipeFile.create_sas_five_pipe(in_pipe_path)
+    this.run_dedup(index_sas_path, conf_sas_five_path)
+    OutParser.parse_sas5(out_dup2_path, true)
+    OutParser.parse_sas5(out_dup1_path, false)
 
   def run_dedup(index_path : String, conf_path : String) =
     DoubleCheckDuplicated.doubleCheck(

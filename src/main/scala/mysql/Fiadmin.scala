@@ -112,6 +112,71 @@ object Fiadmin:
     return id
 
   /**
+    * Queries the Fi-Admin MySQL database for the title serial and ISSN.
+    * Returns the title serial and ISSN as indexed in the database.
+    * Each request is cached for optimization.
+    */
+  var get_title_and_issn_cache: Map[String, List[String]] = Map()
+  def get_title_and_issn(title_serial: String, issn: String): List[String] =
+    var result: List[String] = List("", "")
+
+    val cache_key = s"$title_serial$issn"
+    if (this.get_title_and_issn_cache.contains(cache_key)) {
+      result = this.get_title_and_issn_cache(cache_key)
+    } else {
+      var sql_title = ""
+      var sql_issn = ""
+      if (title_serial != "") {
+        sql_title = s"(a.shortened_title = '$title_serial' OR a.title = '$title_serial')"
+      }
+      if (issn != "") {
+        sql_issn = s"(a.issn = '$issn' OR c.issn = '$issn')"
+        if (sql_title != "") {
+          sql_issn = s" OR $sql_issn"
+        }
+      }
+
+      try {
+        val statement = this.connection.createStatement
+        val rs = statement.executeQuery(
+          s"""
+          SELECT 
+            coalesce(NULLIF(a.shortened_title, ''), a.title) as 'title_serial',
+            coalesce(NULLIF(a.issn, ''), c.issn) as 'issn',
+            b.initial_date,
+            b.initial_volume,
+            b.initial_number,
+            b.final_date,
+            b.final_volume,
+            b.final_number,
+            b.indexer_cc_code
+          FROM 
+            title_title AS a,
+            title_indexrange AS b,
+            title_titlevariance AS c
+          WHERE
+            ($sql_title $sql_issn) AND
+            c.title_id = a.id AND
+            c.type = '240' AND 
+            c.issn IS NOT NULL AND
+            b.title_id = a.id AND 
+            b.index_code_id = '17'
+          LIMIT 1
+          """
+        )
+        while (rs.next) {
+          val title_serial_new = rs.getString("title_serial")
+          val issn_new = rs.getString("issn")
+          result = List(title_serial_new, issn_new)
+        }
+        this.get_title_and_issn_cache += cache_key -> result
+      } catch {
+        case e: Exception => e.printStackTrace
+      }
+    }
+    return result
+
+  /**
     * Queries the Fi-Admin MySQL database for evidence if the 
     * Qualifier DeCS Code exists.
     * Each request is cached for optimization.
