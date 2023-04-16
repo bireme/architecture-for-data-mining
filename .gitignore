@@ -37,3 +37,5 @@ data/Dedup/indexes/
 
 logs/
 temp/
+
+./export/

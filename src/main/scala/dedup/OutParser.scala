@@ -3,9 +3,12 @@ package dedup
 import util.control.Breaks._
 import scala.io.Source
 import org.mongodb.scala.model.Filters._
+import org.mongodb.scala.model.Updates._
 import org.bson.BsonNull
 import org.mongodb.scala.ObservableFuture
 import org.mongodb.scala.bson.collection.mutable.Document
+import scala.concurrent.*
+import scala.concurrent.duration.*
 
 import mongo.MongoDB
 
@@ -128,6 +131,27 @@ object OutParser:
       }
     }
 
+  def remove_field(doc_id : Integer, field_name : String) =
+    var update = this.mongodb_transformed.collection.updateOne(
+      and(
+        equal("reference.pk", doc_id),
+        exists(field_name, true)
+      ),
+      unset(field_name)
+    )
+
+    //var processing = true
+    update.subscribe(
+      Void => {},
+      (e: Throwable) => {println(s"Error: $e")},
+      //() => {processing = false}
+      () => {}
+    )
+    Await.ready(update.toFuture, 30.seconds)
+    /*while (processing) {
+      Thread.sleep(100)
+    }*/
+
   def set_doc_as_duplicate(doc_id : Integer, id_fiadmin : String = null) =
     var doc = this.mongodb_transformed.collection.find(
       and(
@@ -223,7 +247,7 @@ object OutParser:
         obj.put("referenceduplicate", new_doc)
 
         this.mongodb_transformed.collection.updateOne(
-          equal("reference.pk", doc_id), 
+          equal("reference.pk", doc_id),
           Document("$set" -> obj)
         ).toFuture()
       },
@@ -233,3 +257,10 @@ object OutParser:
     while (processing) {
       Thread.sleep(100)
     }
+
+    remove_field(doc_id, "referencesource")
+    remove_field(doc_id, "referenceanalytic")
+    remove_field(doc_id, "referencecomplement")
+    remove_field(doc_id, "referencelocal")
+    remove_field(doc_id, "descriptor")
+    remove_field(doc_id, "reference")
