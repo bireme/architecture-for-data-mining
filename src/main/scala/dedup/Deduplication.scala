@@ -60,24 +60,28 @@ class Deduplication():
     new File(out_nodup2_path).delete()
 
   def run() =
+    // MNT
     this.erase_in_out_files()
     PipeFile.create_mnt_pipe(in_pipe_path)
     this.run_dedup(index_mnt_path, conf_mnt_path)
     OutParser.parse_mnt(out_dup2_path, true)
     OutParser.parse_mnt(out_dup1_path, false)
 
+    // MNTAM
     this.erase_in_out_files()
     PipeFile.create_mntam_pipe(in_pipe_path)
     this.run_dedup(index_mntam_path, conf_mntam_path)
     OutParser.parse_mntam(out_dup2_path, true)
     OutParser.parse_mntam(out_dup1_path, false)
 
+    // SAS 7
     this.erase_in_out_files()
     PipeFile.create_sas_seven_pipe(in_pipe_path)
     this.run_dedup(index_sas_path, conf_sas_seven_path)
     OutParser.parse_sas7(out_dup2_path, true)
     OutParser.parse_sas7(out_dup1_path, false)
 
+    // SAS 5
     this.erase_in_out_files()
     PipeFile.create_sas_five_pipe(in_pipe_path)
     this.run_dedup(index_sas_path, conf_sas_five_path)
