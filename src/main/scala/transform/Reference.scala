@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat
 import java.text.ParseException
 import org.mongodb.scala.bson.collection.mutable.Document
 import org.bson.BsonString
+import org.bson.BsonDocument
 import scribe.Logger
 
 
@@ -132,16 +133,18 @@ class Reference extends Base_Reference:
       * a warning if the code is not available in FI-Admin's MySQL database
       */
     def transform_field(fiadmin_field: String, isis_field: String) =
-      this.set_field_as_string(fiadmin_field, isis_field)
-
-      val values = get_all_values(isis_field)
+      var values = get_all_values(isis_field)
       val value_v2 = get_first_value("2")
+      var i = 0
       values.foreach(value =>
         val is_valid = Fiadmin.is_code_valid(value, fiadmin_field)
         if (!is_valid) {
+          values = values.updated(i, "")
           logger.warn(s"biblioref.reference;$value_v2;v$isis_field;Not found in FI Admin - $value")
         }
+        i += 1
       )
+      this.fields.put(fiadmin_field, values)
 
     /**
       * Transforms the "descriptive_information" field for FI-Admin.
@@ -168,16 +171,25 @@ class Reference extends Base_Reference:
       * for the subfield _i
       */
     def transform_abstract() =
-      this.set_field_as_document("abstract", "83")
-
       val value_v2 = get_first_value("2")
-      val values_v83_i = get_all_values("83", "_i")
-      values_v83_i.foreach(value_v83_i =>
-        val is_valid = Fiadmin.is_code_valid(value_v83_i, "text_language")
-        if (!is_valid) {
-          logger.warn(s"biblioref.reference;$value_v2;v83_i;Not found in FI Admin - $value_v83_i")
+      val values = get_all_values_as_document("83")
+      var i = 0
+      values.forEach(value =>
+        var value_doc = value.asDocument()
+        if (value_doc.keySet.contains("_i") == true) {
+          val subfield_value = value_doc.getString("_i", BsonString("")).getValue().trim()
+          val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
+          if (!is_valid) {
+            value_doc.remove("_i")
+            value_doc.put("_i", BsonString(""))
+            values.set(i, value_doc)
+            
+            logger.warn(s"biblioref.reference;$value_v2;v83_i;Not found in FI Admin - $value")
+          }
         }
+        i += 1
       )
+      this.fields.put("abstract", values)
 
     /**
       * Transforms the "author_keyword" field for FI-Admin.
@@ -186,16 +198,25 @@ class Reference extends Base_Reference:
       * for the subfield _i
       */
     def transform_author_keyword() =
-      this.set_field_as_document("author_keyword", "85")
-
       val value_v2 = get_first_value("2")
-      val values_v85_i = get_all_values("85", "_i")
-      values_v85_i.foreach(value_v85_i =>
-        val is_valid = Fiadmin.is_code_valid(value_v85_i, "text_language")
-        if (!is_valid) {
-          logger.warn(s"biblioref.reference;$value_v2;v85_i;Not found in FI Admin - $value_v85_i")
+      val values = get_all_values_as_document("85")
+      var i = 0
+      values.forEach(value =>
+        var value_doc = value.asDocument()
+        if (value_doc.keySet.contains("_i") == true) {
+          val subfield_value = value_doc.getString("_i", BsonString("")).getValue().trim()
+          val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
+          if (!is_valid) {
+            value_doc.remove("_i")
+            value_doc.put("_i", BsonString(""))
+            values.set(i, value_doc)
+            
+            logger.warn(s"biblioref.reference;$value_v2;v85_i;Not found in FI Admin - $value")
+          }
         }
+        i += 1
       )
+      this.fields.put("author_keyword", values)
 
     /**
       * Transforms the "electronic_address" field for FI-Admin.
@@ -204,33 +225,61 @@ class Reference extends Base_Reference:
       * for the subfields _i, _q and _y
       */
     def transform_electronic_address() =
-      this.set_field_as_document("electronic_address", "8")
+      var values_v8 = get_all_values_as_document("8")
+      if (values_v8.size > 0) {
+        val value_v2 = get_first_value("2")
 
-      val value_v2 = get_first_value("2")
+        var i = 0
+        values_v8.toArray.foreach(value =>
+          var value_doc = value.asInstanceOf[BsonDocument]
 
-      val values_v8_i = get_all_values("8", "_i")
-      values_v8_i.foreach(value_v8_i =>
-        val is_valid = Fiadmin.is_code_valid(value_v8_i, "text_language")
-        if (!is_valid) {
-          logger.warn(s"biblioref.reference;$value_v2;v8_i;Not found in FI Admin - $value_v8_i")
-        }
-      )
+          /* Dealing with _i subfield */
+          if (value_doc.keySet.contains("_i") == true) {
+            val value_i = value_doc.get("_i").asString.getValue().trim()
+            if (value_i != "") {
+              val is_valid = Fiadmin.is_code_valid(value_i, "text_language")
+              if (!is_valid) {
+                logger.warn(s"biblioref.reference;$value_v2;v8_i;Not found in FI Admin - $value_i")
+                value_doc.remove("_i")
+                value_doc.put("_i", BsonString(""))
+                values_v8.set(i, value_doc)
+              }
+            }
+          }
 
-      val values_v8_q = get_all_values("8", "_q")
-      values_v8_q.foreach(value_v8_q =>
-        val is_valid = Fiadmin.is_code_valid(value_v8_q, "electronic_address_q")
-        if (!is_valid) {
-          logger.warn(s"biblioref.reference;$value_v2;v8_q;Not found in FI Admin - $value_v8_q")
-        }
-      )
+          /* Dealing with _q subfield */
+          if (value_doc.keySet.contains("_q") == true) {
+            val value_q = value_doc.get("_q").asString.getValue().trim()
+            if (value_q != "") {
+              val is_valid = Fiadmin.is_code_valid(value_q, "electronic_address_q")
+              if (!is_valid) {
+                logger.warn(s"biblioref.reference;$value_v2;v8_q;Not found in FI Admin - $value_q")
+                value_doc.remove("_q")
+                value_doc.put("_q", BsonString(""))
+                values_v8.set(i, value_doc)
+              }
+            }
+          }
 
-      val values_v8_y = get_all_values("8", "_y")
-      values_v8_y.foreach(value_v8_y =>
-        val is_valid = Fiadmin.is_code_valid(value_v8_y, "electronic_address_y")
-        if (!is_valid) {
-          logger.warn(s"biblioref.reference;$value_v2;v8_y;Not found in FI Admin - $value_v8_y")
-        }
-      )
+          /* Dealing with _y subfield */
+          if (value_doc.keySet.contains("_y") == true) {
+            val value_y = value_doc.get("_y").asString.getValue().trim()
+            if (value_y != "") {
+              val is_valid = Fiadmin.is_code_valid(value_y, "electronic_address_y")
+              if (!is_valid) {
+                logger.warn(s"biblioref.reference;$value_v2;v8_y;Not found in FI Admin - $value_y")
+                value_doc.remove("_y")
+                value_doc.put("_y", BsonString(""))
+                values_v8.set(i, value_doc)
+              }
+            }
+          }
+
+          i += 1
+        )
+        
+        this.fields.put("electronic_address", values_v8)
+      }
 
     /**
       * Transforms the "check_tags" field for FI-Admin.
@@ -238,16 +287,25 @@ class Reference extends Base_Reference:
       * a warning if the code is not available in FI-Admin's MySQL database
       */
     def transform_check_tags() =
-      this.set_field_as_document("check_tags", "76")
-
-      val values_v76 = get_all_values("76")
       val value_v2 = get_first_value("2")
-      values_v76.foreach(value_v76 =>
-        val is_valid = Fiadmin.is_code_valid(value_v76, "check_tags")
-        if (!is_valid) {
-          logger.warn(s"biblioref.reference;$value_v2;v76;Not found in FI Admin - $value_v76")
+      val values = get_all_values_as_document("76")
+      var i = 0
+      values.forEach(value =>
+        var value_doc = value.asDocument()
+        if (value_doc.keySet.contains("text") == true) {
+          val subfield_value = value_doc.getString("text", BsonString("")).getValue().trim()
+          val is_valid = Fiadmin.is_code_valid(subfield_value, "check_tags")
+          if (!is_valid) {
+            value_doc.remove("text")
+            value_doc.put("text", BsonString(""))
+            values.set(i, value_doc)
+            
+            logger.warn(s"biblioref.reference;$value_v2;v76;Not found in FI Admin - $value")
+          }
         }
+        i += 1
       )
+      this.fields.put("check_tags", values)
     
     /**
       * Transforms the "publication_date_normalized" field for FI-Admin.
@@ -399,12 +457,13 @@ class Reference extends Base_Reference:
       */
     def transform_item_form() =
       // Fetches the field value
-      var field_value: String = get_first_value("110").toLowerCase()
+      val field_value: String = get_first_value("110").toLowerCase()
+      var new_field_value: String = ""
       
       // Transforms the field value
       if (field_value == "") {
         if (this.doc.keySet.contains("8") == true) {
-          field_value = "s"
+          new_field_value = "s"
         }
       } else if (field_value.length > 1) {
           val replacements = Array(
@@ -422,13 +481,13 @@ class Reference extends Base_Reference:
             val code = replacement(0).asInstanceOf[String]
             val strings_to_replace = replacement(1).asInstanceOf[Array[String]]
             strings_to_replace.foreach(string_to_replace =>
-              field_value = field_value.replace(string_to_replace, code)
+              new_field_value = field_value.replace(string_to_replace, code)
             )
           )
       }
 
-      if (field_value != "") {
-        this.fields.put("item_form", field_value)
+      if (new_field_value != "") {
+        this.fields.put("item_form", new_field_value)
       }
 
     /**

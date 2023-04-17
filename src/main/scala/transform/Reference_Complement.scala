@@ -72,6 +72,7 @@ class Reference_Complement extends Base_Reference:
           if (country_code == null) {
             val value_v2 = get_first_value("2")
             logger.warn(s"biblioref.referencecomplement;$value_v2;v57p;Not found in FI Admin - $value_v57")
+            values_v57 = values_v57.updated(i, "")
           } else {
             values_v57 = values_v57.updated(i, value_v57)
           }

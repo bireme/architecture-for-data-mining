@@ -27,24 +27,66 @@ class Descriptor extends Base_Reference:
     */
   def transform(doc: Document, pk: Int): List[Document] =
     this.doc = doc
-    var values_v87 = get_all_values("87")
-    var values_v88 = get_all_values("88")
+    var values_v87 = get_all_values_as_document("87")
+    var values_v88 = get_all_values_as_document("88")
+    
+    if (values_v87.size > 0 || values_v88.size > 0) {
+      values_v87.toArray.foreach(value =>
+        val descriptor_qualifier = get_descriptor_qualifier(value)
+        val descriptor = descriptor_qualifier(0)
+        val qualifier = descriptor_qualifier(1)
 
-    if (values_v87.length > 0 || values_v88.length > 0) {
-      values_v87.foreach(value =>
-        val keyword_doc = transform_decs_keyword(pk, value, primary=true)
-        this.docs = this.docs :+ keyword_doc
-      )
-
-      values_v88.foreach(value =>
-        val keyword_doc = transform_decs_keyword(pk, value, primary=false)
-        this.docs = this.docs :+ keyword_doc
+        if (descriptor != "") {
+          val keyword_doc = transform_decs_keyword(pk, descriptor, qualifier, primary=true)
+          this.docs = this.docs :+ keyword_doc
+        }
       )
       
+      values_v88.toArray.foreach(value =>
+        val descriptor_qualifier = get_descriptor_qualifier(value)
+        val descriptor = descriptor_qualifier(0)
+        val qualifier = descriptor_qualifier(1)
+
+        if (descriptor != "") {
+          val keyword_doc = transform_decs_keyword(pk, descriptor, qualifier, primary=false)
+          this.docs = this.docs :+ keyword_doc
+        }
+      )
+
       return this.docs
     } else {
       return null
     }
+
+  /**
+    * Extracts the descriptor and qualifier from a keyword entry
+    *
+    * @param keyword
+    */
+  def get_descriptor_qualifier(keyword: Object): List[String] =
+    var value_doc = keyword.asInstanceOf[BsonDocument]
+
+    var descriptor = ""
+    var qualifier = ""
+    if (value_doc.keySet.contains("_d") == true) {
+      descriptor = value_doc.get("_d").asString.getValue().trim()
+      if (descriptor != "") {
+        if (value_doc.keySet.contains("_s") == true) {
+          qualifier = value_doc.get("_s").asString.getValue().trim()
+        }
+      }
+    } else if (value_doc.keySet.contains("text") == true) {
+      val value_text = value_doc.get("text").asString.getValue().trim()
+      if (value_text != "") {
+        val text_split = value_text.split("/")
+
+        descriptor = text_split(0)
+        if (text_split.length > 1) {
+          qualifier = text_split(1)
+        }
+      }
+    }
+    return List(descriptor, qualifier)
 
   /**
     * Sets BIREME's primary key
@@ -65,41 +107,27 @@ class Descriptor extends Base_Reference:
     fields.put("updated_time", tz_datetime)
     return fields
 
-  /**
-    * Leverage DeCS WS to fetch the code for a given keyword
-    */
-  def get_decs_code(keyword: String): String =
-    val decs_url = Settings.getConf("DECS_WS_URL") + URLEncoder.encode(keyword, "ISO-8859-1")
-    var xml = ""
-    var decs_code = ""
-    val keyword_mfn_pattern: Regex = """db=\"decs\" mfn=\"(\d+)\">""".r
-
-    try {
-      xml = Source.fromURL(decs_url)("ISO-8859-1").mkString
-    } catch {
-      case e: Exception => e.printStackTrace
+  def transform_decs_keyword(pk: Int, descriptor: String, qualifier: String, primary: Boolean): Document =
+    var decs_descriptor = descriptor
+    var decs_codes = Fiadmin.get_decs_descriptor(descriptor)
+    if (decs_codes != "" && qualifier != "") {
+      val qualifier_result = Fiadmin.get_decs_qualifier(qualifier)
+      if (qualifier_result != null) {
+        decs_codes += qualifier_result(0)
+        decs_descriptor += "/" + qualifier_result(1)
+      } else {
+        val value_v2 = get_first_value("2")
+        logger.warn(s"main.descriptor;$value_v2;DeCS;Invalid DeCS qualifier - $qualifier")
+      }
     }
 
-    for patternMatch <- keyword_mfn_pattern.findAllMatchIn(xml) do
-      decs_code = patternMatch.group(1)
-
-    if (decs_code != "") {
-      decs_code = "^d" + decs_code
-    } else {
-      val value_v2 = get_first_value("2")
-      logger.warn(s"main.descriptor;$value_v2;DeCS;Invalid DeCS keyword - $keyword")
-    }
-
-    return decs_code
-  
-  def transform_decs_keyword(pk: Int, value: String, primary: Boolean): Document =
     var fields = Document(
       "status" -> Settings.getConf("STATUS").toInt,
       "created_by" -> Settings.getConf("CREATED_BY").toInt,
       "content_type" -> 43,
       "primary" -> primary,
-      "text" -> value,
-      "code" -> this.get_decs_code(value)
+      "text" -> decs_descriptor,
+      "code" -> decs_codes
     )
     var keyword_doc = Document(
       "model" -> "main.descriptor",

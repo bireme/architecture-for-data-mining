@@ -64,16 +64,18 @@ class Reference_Analytic extends Base_Reference:
       * a warning if the code is not available in FI-Admin's MySQL database
       */
     def transform_clinical_trial_registry_name() =
-      this.set_field_as_string("clinical_trial_registry_name", "700")
-
-      val values = get_all_values("700")
+      var values = get_all_values("700")
       val value_v2 = get_first_value("2")
+      var i = 0
       values.foreach(value =>
         val is_valid = Fiadmin.is_code_valid(value, "clinical_trial_database")
         if (!is_valid) {
+          values = values.updated(i, "")
           logger.warn(s"biblioref.referenceanalytic;$value_v2;v700;Not found in FI Admin - $value")
         }
+        i += 1
       )
+      this.fields.put("clinical_trial_registry_name", values)
 
     /**
       * Transforms the "title" field for FI-Admin.
@@ -82,16 +84,25 @@ class Reference_Analytic extends Base_Reference:
       * for the subfield _i
       */
     def transform_title() =
-      this.set_field_as_document("title", "12")
-
       val value_v2 = get_first_value("2")
-      val values = get_all_values("12", "_i")
-      values.foreach(value =>
-        val is_valid = Fiadmin.is_code_valid(value, "text_language")
-        if (!is_valid) {
-          logger.warn(s"biblioref.referenceanalytic;$value_v2;v12_i;Not found in FI Admin - $value")
+      val values = get_all_values_as_document("12")
+      var i = 0
+      values.forEach(value =>
+        var value_doc = value.asDocument()
+        if (value_doc.keySet.contains("_i") == true) {
+          val subfield_value = value_doc.getString("_i", BsonString("")).getValue().trim()
+          val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
+          if (!is_valid) {
+            value_doc.remove("_i")
+            value_doc.put("_i", BsonString(""))
+            values.set(i, value_doc)
+            
+            logger.warn(s"biblioref.referenceanalytic;$value_v2;v12_i;Not found in FI Admin - $value")
+          }
         }
+        i += 1
       )
+      this.fields.put("title", values)
     
     /**
       * Transforms the "corporate_author" field for FI-Admin.
@@ -100,16 +111,25 @@ class Reference_Analytic extends Base_Reference:
       * for the subfield _r
       */
     def transform_corporate_author() =
-      this.set_field_as_document("corporate_author", "11")
-
       val value_v2 = get_first_value("2")
-      val values = get_all_values("11", "_r")
-      values.foreach(value =>
-        val is_valid = Fiadmin.is_code_valid(value, "degree_of_responsibility")
-        if (!is_valid) {
-          logger.warn(s"biblioref.referenceanalytic;$value_v2;v11_r;Not found in FI Admin - $value")
+      val values = get_all_values_as_document("11")
+      var i = 0
+      values.forEach(value =>
+        var value_doc = value.asDocument()
+        if (value_doc.keySet.contains("_r") == true) {
+          val subfield_value = value_doc.getString("_r", BsonString("")).getValue().trim()
+          val is_valid = Fiadmin.is_code_valid(subfield_value, "degree_of_responsibility")
+          if (!is_valid) {
+            value_doc.remove("_r")
+            value_doc.put("_r", BsonString(""))
+            values.set(i, value_doc)
+            
+            logger.warn(s"biblioref.referenceanalytic;$value_v2;v11_r;Not found in FI Admin - $value")
+          }
         }
+        i += 1
       )
+      this.fields.put("corporate_author", values)
 
     /**
       * Transforms the "individual_author" field for FI-Admin.
@@ -122,17 +142,8 @@ class Reference_Analytic extends Base_Reference:
       if (values_v10.size > 0) {
         val value_v2 = get_first_value("2")
 
-        /* Dealing with _r subfield */
-        var values = get_all_values("10", "_r")
-        values.foreach(value =>
-          val is_valid = Fiadmin.is_code_valid(value, "degree_of_responsibility")
-          if (!is_valid) {
-            logger.warn(s"biblioref.referenceanalytic;$value_v2;v10_r;Not found in FI Admin - $value")
-          }
-        )
-
         /* Dealing with _p subfield and replacing the country name by its country code */
-        var i = 0;
+        var i = 0
         values_v10.toArray.foreach(value =>
           var value_doc = value.asInstanceOf[BsonDocument]
           if (value_doc.keySet.contains("_p") == true) {
@@ -141,9 +152,25 @@ class Reference_Analytic extends Base_Reference:
               val country_code = Fiadmin.get_country_code(value_v10_p)
               if (country_code == null) {
                 logger.warn(s"biblioref.referenceanalytic;$value_v2;v10_p;Not found in FI Admin - $value")
+                value_doc.remove("_p")
+                value_doc.put("_p", BsonString(""))
               } else {
                 value_doc.remove("_p")
                 value_doc.put("_p", BsonString(country_code))
+              }
+              values_v10.set(i, value_doc)
+            }
+          }
+
+          /* Dealing with _r subfield */
+          if (value_doc.keySet.contains("_r") == true) {
+            val value_v10_r = value_doc.get("_r").asString.getValue().trim()
+            if (value_v10_r != "") {
+              val is_valid = Fiadmin.is_code_valid(value_v10_r, "degree_of_responsibility")
+              if (!is_valid) {
+                logger.warn(s"biblioref.referenceanalytic;$value_v2;v10_r;Not found in FI Admin - $value")
+                value_doc.remove("_r")
+                value_doc.put("_r", BsonString(""))
                 values_v10.set(i, value_doc)
               }
             }

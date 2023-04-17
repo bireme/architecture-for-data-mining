@@ -33,5 +33,9 @@ metals.sbt
 
 # ISIS FILES
 data/isis/
+data/Dedup/indexes/
 
 logs/
+temp/
+
+export/
