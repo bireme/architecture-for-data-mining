@@ -29,17 +29,17 @@ class Reference_Analytic extends Base_Reference:
       if (value_v6.contains("a")) {
         // This should be the first Analytic PK, the one from the same referencesource
         //this.set_source(pk)
-        this.set_pk(pk)
+        set_pk(pk)
 
-        this.set_field_as_string("english_translated_title", "13")
-        this.set_field_as_string("doi_number", "724")
+        set_field_as_string("english_translated_title", "13")
+        set_field_as_string("doi_number", "724")
 
-        this.set_field_as_document("pages", "14")
+        set_field_as_document("pages", "14")
 
-        this.transform_title()
-        this.transform_individual_author()
-        this.transform_corporate_author()
-        this.transform_clinical_trial_registry_name()
+        transform_title()
+        transform_individual_author()
+        transform_corporate_author()
+        transform_clinical_trial_registry_name()
 
         this.new_doc += ("fields", this.fields)
         return this.new_doc

@@ -27,10 +27,10 @@ object LiteratureType:
     var is_valid = false
 
     val cache_key = s"$value_v5-$value_v6"
-    if (this.is_literature_type_valid_cache.contains(cache_key)) {
-      is_valid = this.is_literature_type_valid_cache(cache_key)
+    if (is_literature_type_valid_cache.contains(cache_key)) {
+      is_valid = is_literature_type_valid_cache(cache_key)
     } else {
-      var docs = this.collection.find(
+      var docs = collection.find(
         and(
           equal("v5", value_v5), 
           equal("v6", value_v6)
@@ -43,7 +43,7 @@ object LiteratureType:
         },
         (e: Throwable) => {println(s"Error: $e")},
         () => { 
-          this.is_literature_type_valid_cache += cache_key -> is_valid
+          is_literature_type_valid_cache += cache_key -> is_valid
         }
       )
       Await.ready(docs.toFuture, 30.seconds)

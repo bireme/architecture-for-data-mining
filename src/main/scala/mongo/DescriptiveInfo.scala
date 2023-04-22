@@ -27,10 +27,10 @@ object DescriptiveInfo:
     var is_valid = false
 
     val cache_key = s"$value_v38_b"
-    if (this.is_descriptive_code_valid_cache.contains(cache_key)) {
-      is_valid = this.is_descriptive_code_valid_cache(cache_key)
+    if (is_descriptive_code_valid_cache.contains(cache_key)) {
+      is_valid = is_descriptive_code_valid_cache(cache_key)
     } else {
-      var docs = this.collection.find(
+      var docs = collection.find(
         and(
           equal("_b", value_v38_b)
         )
@@ -42,7 +42,7 @@ object DescriptiveInfo:
         },
         (e: Throwable) => {println(s"Error: $e")},
         () => { 
-          this.is_descriptive_code_valid_cache += cache_key -> is_valid
+          is_descriptive_code_valid_cache += cache_key -> is_valid
         }
       )
       Await.ready(docs.toFuture, 30.seconds)

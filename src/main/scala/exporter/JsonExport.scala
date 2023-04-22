@@ -28,7 +28,7 @@ object JsonExport:
 
   def run() =
     var processing = true
-    this.docs.subscribe(
+    docs.subscribe(
       (doc: Document) => {
         val id = doc.get("_id").get.asObjectId.getValue.toString
         create_file(id, doc.toJson)

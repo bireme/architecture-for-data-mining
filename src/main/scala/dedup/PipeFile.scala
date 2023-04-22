@@ -48,7 +48,7 @@ object PipeFile:
 
 
   def create_mnt_pipe(in_pipe_path : String) =
-    var docs = this.mongodb_transformed.collection.find(
+    var docs = mongodb_transformed.collection.find(
       and(
         or(
           equal("reference.fields.literature_type", "M"),
@@ -107,7 +107,7 @@ object PipeFile:
 
 
   def create_mntam_pipe(in_pipe_path : String) =
-    var docs = this.mongodb_transformed.collection.find(
+    var docs = mongodb_transformed.collection.find(
       and(
         or(
           equal("reference.fields.literature_type", "M"),
@@ -176,7 +176,7 @@ object PipeFile:
 
 
   def create_sas_seven_pipe(in_pipe_path : String) =
-    var docs = this.mongodb_transformed.collection.find(
+    var docs = mongodb_transformed.collection.find(
       regex("reference.fields.literature_type", "^S.*")
     )
 
@@ -242,7 +242,7 @@ object PipeFile:
 
 
   def create_sas_five_pipe(in_pipe_path : String) =
-    var docs = this.mongodb_transformed.collection.find(
+    var docs = mongodb_transformed.collection.find(
       regex("reference.fields.literature_type", "^S.*")
     )
 

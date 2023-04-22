@@ -34,9 +34,9 @@ object Transformer:
   mongodb_isiscopy.set_collection("01_isiscopy")
   var docs = mongodb_isiscopy.collection.find()
 
-  this.init_loggers()
-  this.init_fiadmin_nextid()
-  this.init_mongodb_collections()
+  init_loggers()
+  init_fiadmin_nextid()
+  init_mongodb_collections()
 
   /**
     * Init all loggers used in the transformer process
@@ -71,35 +71,35 @@ object Transformer:
     */
   def init_fiadmin_nextid() =
     val next_id_url = Settings.getConf("NEXT_ID_URL")
-    this.fiadmin_nextid = Source.fromURL(next_id_url).mkString.toInt
-    this.fiadmin_nextid += Settings.getConf("ID_OFFSET").toInt
+    fiadmin_nextid = Source.fromURL(next_id_url).mkString.toInt
+    fiadmin_nextid += Settings.getConf("ID_OFFSET").toInt
 
   /**
     * Init all collections used in the transformer process to store
     * transformed data
     */
   def init_mongodb_collections() =
-    this.mongodb_transformed.connect()
+    mongodb_transformed.connect()
 
-    this.mongodb_transformed.set_collection("02_transformed")
-    this.mongodb_transformed.drop_collection()
-    this.mongodb_transformed.set_collection("02_transformed")
+    mongodb_transformed.set_collection("02_transformed")
+    mongodb_transformed.drop_collection()
+    mongodb_transformed.set_collection("02_transformed")
 
     // Unique index
     val indexOptions = IndexOptions().unique(true)
-    this.mongodb_transformed.collection.createIndex(Indexes.ascending("reference.pk"), indexOptions)
-    this.mongodb_transformed.collection.createIndex(Indexes.ascending("referenceanalytic.pk"), indexOptions)
-    this.mongodb_transformed.collection.createIndex(Indexes.ascending("referencesource.pk"), indexOptions)
-    this.mongodb_transformed.collection.createIndex(Indexes.ascending("referencecomplement.fields.source"), indexOptions)
-    this.mongodb_transformed.collection.createIndex(Indexes.ascending("referencelocal.fields.source"), indexOptions)
-    this.mongodb_transformed.collection.createIndex(Indexes.ascending("descriptor.fields.object_id"), indexOptions)
+    mongodb_transformed.collection.createIndex(Indexes.ascending("reference.pk"), indexOptions)
+    mongodb_transformed.collection.createIndex(Indexes.ascending("referenceanalytic.pk"), indexOptions)
+    mongodb_transformed.collection.createIndex(Indexes.ascending("referencesource.pk"), indexOptions)
+    mongodb_transformed.collection.createIndex(Indexes.ascending("referencecomplement.fields.source"), indexOptions)
+    mongodb_transformed.collection.createIndex(Indexes.ascending("referencelocal.fields.source"), indexOptions)
+    mongodb_transformed.collection.createIndex(Indexes.ascending("descriptor.fields.object_id"), indexOptions)
 
   /**
     * Transforms all the ISIS docs into all Fi-Admin's models
     */
   def transform_docs() =
     var processing = true
-    this.docs.subscribe(
+    docs.subscribe(
       (doc: Document) => {
         val reference = Reference()
         val referenceanalytic = Reference_Analytic()
@@ -108,12 +108,12 @@ object Transformer:
         val referencelocal = Reference_Local()
         val descriptor = Descriptor()
 
-        val reference_doc = reference.transform(doc, this.fiadmin_nextid)
-        val referenceanalytic_doc = referenceanalytic.transform(doc, this.fiadmin_nextid)
-        val referencesource_doc = referencesource.transform(doc, this.fiadmin_nextid)
-        val referencecomplement_doc = referencecomplement.transform(doc, this.fiadmin_nextid)
-        val referencelocal_doc = referencelocal.transform(doc, this.fiadmin_nextid)
-        val descriptor_docs = descriptor.transform(doc, this.fiadmin_nextid)
+        val reference_doc = reference.transform(doc, fiadmin_nextid)
+        val referenceanalytic_doc = referenceanalytic.transform(doc, fiadmin_nextid)
+        val referencesource_doc = referencesource.transform(doc, fiadmin_nextid)
+        val referencecomplement_doc = referencecomplement.transform(doc, fiadmin_nextid)
+        val referencelocal_doc = referencelocal.transform(doc, fiadmin_nextid)
+        val descriptor_docs = descriptor.transform(doc, fiadmin_nextid)
 
         if (reference_doc != null) {
           var merged_doc = Document(
@@ -136,8 +136,8 @@ object Transformer:
             merged_doc.put("descriptor", descriptor_docs)
           }
 
-          this.mongodb_transformed.insert_document(merged_doc)
-          this.fiadmin_nextid += 1
+          mongodb_transformed.insert_document(merged_doc)
+          fiadmin_nextid += 1
         }
       },
       (e: Throwable) => {println(s"Error: $e")},
