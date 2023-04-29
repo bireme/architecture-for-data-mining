@@ -20,7 +20,7 @@ class Base_Reference():
     * @param name FI-Admin field name
     * @param key ISIS field number
     */
-  def set_field_as_string(name: String, key: String) =
+  def set_field_as_string(name: String, key: String) : Unit =
     if (this.doc.keySet.contains(key) == true) {
       if (this.doc.get(key).get.isArray()) {
         this.fields.put(name, this.doc.get(key).get)
@@ -35,7 +35,7 @@ class Base_Reference():
     * @param name FI-Admin field name
     * @param key ISIS field number
     */
-  def set_field_as_document(name: String, key: String) =
+  def set_field_as_document(name: String, key: String) : Unit =
     if (this.doc.keySet.contains(key) == true) {
       if (this.doc.get(key).get.isArray()) {
         this.fields.put(name, this.doc.get(key).get)

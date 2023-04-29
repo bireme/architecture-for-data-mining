@@ -140,17 +140,12 @@ object OutParser:
       unset(field_name)
     )
 
-    //var processing = true
     update.subscribe(
       Void => {},
       (e: Throwable) => {println(s"Error: $e")},
-      //() => {processing = false}
       () => {}
     )
-    Await.ready(update.toFuture, 30.seconds)
-    /*while (processing) {
-      Thread.sleep(100)
-    }*/
+    Await.ready(update.toFuture, 60.seconds)
 
   def set_doc_as_duplicate(doc_id : Integer, id_fiadmin : String = null) =
     var doc = mongodb_transformed.collection.find(

@@ -54,14 +54,14 @@ class Reference_Complement extends Base_Reference:
       *
       * @param pk
       */
-    def set_source(pk: Int) =
+    def set_source(pk: Int) : Unit =
       this.fields.put("source", pk)
 
     /**
       * Transforms the "conference_country" field for FI-Admin.
       * Replaces the content by the country code in FI-Admin.
       */
-    def transform_conference_country() =
+    def transform_conference_country() : Unit =
       var values_v57 = get_all_values("57")
       
       var i = 0;

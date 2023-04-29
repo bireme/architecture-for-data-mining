@@ -47,7 +47,7 @@ object PipeFile:
     return field_value
 
 
-  def create_mnt_pipe(in_pipe_path : String) =
+  def create_mnt_pipe(in_pipe_path : String) : Unit =
     var docs = mongodb_transformed.collection.find(
       and(
         or(
@@ -106,7 +106,7 @@ object PipeFile:
     writer.close()
 
 
-  def create_mntam_pipe(in_pipe_path : String) =
+  def create_mntam_pipe(in_pipe_path : String) : Unit =
     var docs = mongodb_transformed.collection.find(
       and(
         or(
@@ -175,7 +175,7 @@ object PipeFile:
     writer.close()
 
 
-  def create_sas_seven_pipe(in_pipe_path : String) =
+  def create_sas_seven_pipe(in_pipe_path : String) : Unit =
     var docs = mongodb_transformed.collection.find(
       regex("reference.fields.literature_type", "^S.*")
     )
@@ -241,7 +241,7 @@ object PipeFile:
     writer.close()
 
 
-  def create_sas_five_pipe(in_pipe_path : String) =
+  def create_sas_five_pipe(in_pipe_path : String) : Unit =
     var docs = mongodb_transformed.collection.find(
       regex("reference.fields.literature_type", "^S.*")
     )

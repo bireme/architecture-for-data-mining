@@ -7,15 +7,22 @@ import java.sql.{Connection,DriverManager}
   * An abstraction to handle Fi-Admin data in MySQL
   */
 object Fiadmin:
-  val url = Settings.getConf("FIADMIN_MYSQL_URL")
   val driver = "com.mysql.cj.jdbc.Driver"
+
+  val url = Settings.getConf("FIADMIN_MYSQL_URL")
   val username = Settings.getConf("FIADMIN_MYSQL_USER")
   val password = Settings.getConf("FIADMIN_MYSQL_PASSWORD")
-  var connection:Connection = _
+  var connection : Connection = _
+
+  val url_source = Settings.getConf("FIADMIN_MYSQL_SOURCE_URL")
+  val username_source = Settings.getConf("FIADMIN_MYSQL_SOURCE_USER")
+  val password_source = Settings.getConf("FIADMIN_MYSQL_SOURCE_PASSWORD")
+  var connection_source : Connection = _
 
   try {
     Class.forName(driver)
     connection = DriverManager.getConnection(url, username, password)
+    connection_source = DriverManager.getConnection(url_source, username_source, password_source)
   } catch {
     case e: Exception => e.printStackTrace
   }
@@ -105,6 +112,108 @@ object Fiadmin:
           id = rs.getString("code")
         }
         get_country_code_cache += country -> id
+      } catch {
+        case e: Exception => e.printStackTrace
+      }
+    }
+    return id
+
+  /**
+    * Queries the Fi-Admin MySQL database for the Source ID 
+    * for a SAS document.
+    * Status priority = 1, 0, -3, -1
+    * Each request is cached for optimization.
+    */
+  var get_source_sas_id_cache: Map[String, String] = Map()
+  def get_source_sas_id(journal : String, year : String, volume : String, number : String): String =
+    var id: String = null
+
+    val cache_key = s"$journal$year$volume$number"
+    if (get_source_sas_id_cache.contains(cache_key)) {
+      id = get_source_sas_id_cache(cache_key)
+    } else {
+      var sql_volume = ""
+      if (volume.nonEmpty) {
+        sql_volume = s"a.volume_serial = '$volume' AND "
+      }
+
+      var sql_number = ""
+      if (number.nonEmpty) {
+        sql_number = s"a.issue_number = '$number' AND "
+      }
+
+      try {
+        val statement = connection_source.createStatement
+        val rs = statement.executeQuery(s"""
+          SELECT
+            b.id as code
+          FROM 
+            biblioref_referencesource AS a, 
+            biblioref_reference AS b 
+          WHERE 
+            a.title_serial = '$journal' AND 
+            a.reference_ptr_id = b.id AND
+            $sql_volume
+            $sql_number
+            LEFT(b.publication_date_normalized,4) = '$year'
+          ORDER BY
+            CASE 
+              WHEN b.status = -1 THEN -4
+              ELSE b.status
+            END DESC
+          LIMIT 1
+          """
+        )
+        while (rs.next) {
+          id = rs.getString("code")
+        }
+        get_source_sas_id_cache += cache_key -> id
+      } catch {
+        case e: Exception => e.printStackTrace
+      }
+    }
+    return id
+
+  /**
+    * Queries the Fi-Admin MySQL database for the Source ID 
+    * for a MNT document.
+    * Status priority = 1, 0, -3, -1
+    * Each request is cached for optimization.
+    */
+  var get_source_mnt_id_cache: Map[String, String] = Map()
+  def get_source_mnt_id(title : String, year : String, literature : String): String =
+    var id: String = null
+
+    val cache_key = s"$title$year$literature"
+    if (get_source_mnt_id_cache.contains(cache_key)) {
+      id = get_source_mnt_id_cache(cache_key)
+    } else {
+      try {
+        val statement = connection_source.createStatement
+        val rs = statement.executeQuery(s"""
+          SELECT 
+            b.id as code 
+          FROM 
+            biblioref_referencesource AS a, 
+            biblioref_reference AS b 
+          WHERE 
+            b.literature_type = '$literature' AND 
+            NOT b.treatment_level LIKE 'am%' AND
+            a.reference_ptr_id=b.id AND 
+            a.title_monographic LIKE '%$title%' AND
+            LEFT(b.publication_date_normalized,4) = '$year'
+          ORDER BY
+            CASE 
+              WHEN b.status = -1 THEN -4
+              ELSE b.status
+            END DESC
+          LIMIT 1
+          """
+        )
+        while (rs.next) {
+          id = rs.getString("code")
+        }
+        get_source_mnt_id_cache += cache_key -> id
       } catch {
         case e: Exception => e.printStackTrace
       }
@@ -203,7 +312,6 @@ object Fiadmin:
             `thesaurus_identifierconceptlistqualif` AS b,
             `thesaurus_identifierqualif` AS c 
           WHERE 
-            a.`language_code` = 'ES' AND 
             a.`term_thesaurus` = '1' AND
             a.`concept_preferred_term` = 'Y' AND 
             a.`record_preferred_term`= 'Y' AND
@@ -398,3 +506,4 @@ object Fiadmin:
     */
   def close() =
     connection.close
+    connection_source.close

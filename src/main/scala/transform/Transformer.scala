@@ -41,7 +41,7 @@ object Transformer:
   /**
     * Init all loggers used in the transformer process
     */
-  def init_loggers() =
+  def init_loggers() : Unit =
     Logger("biblioref.reference")
     .withHandler(writer = FileWriter("logs" / "biblioref.reference.log"))
     .replace()
@@ -69,7 +69,7 @@ object Transformer:
   /**
     * Init Fi-Admin's next id based on the last ID in their search index
     */
-  def init_fiadmin_nextid() =
+  def init_fiadmin_nextid() : Unit =
     val next_id_url = Settings.getConf("NEXT_ID_URL")
     fiadmin_nextid = Source.fromURL(next_id_url).mkString.toInt
     fiadmin_nextid += Settings.getConf("ID_OFFSET").toInt
@@ -78,7 +78,7 @@ object Transformer:
     * Init all collections used in the transformer process to store
     * transformed data
     */
-  def init_mongodb_collections() =
+  def init_mongodb_collections() : Unit =
     mongodb_transformed.connect()
 
     mongodb_transformed.set_collection("02_transformed")
@@ -97,7 +97,7 @@ object Transformer:
   /**
     * Transforms all the ISIS docs into all Fi-Admin's models
     */
-  def transform_docs() =
+  def transform_docs() : Unit =
     var processing = true
     docs.subscribe(
       (doc: Document) => {
@@ -109,17 +109,16 @@ object Transformer:
         val descriptor = Descriptor()
 
         val reference_doc = reference.transform(doc, fiadmin_nextid)
-        val referenceanalytic_doc = referenceanalytic.transform(doc, fiadmin_nextid)
-        val referencesource_doc = referencesource.transform(doc, fiadmin_nextid)
-        val referencecomplement_doc = referencecomplement.transform(doc, fiadmin_nextid)
-        val referencelocal_doc = referencelocal.transform(doc, fiadmin_nextid)
-        val descriptor_docs = descriptor.transform(doc, fiadmin_nextid)
-
         if (reference_doc != null) {
           var merged_doc = Document(
             "reference" -> reference_doc
           )
 
+          val referenceanalytic_doc = referenceanalytic.transform(doc, fiadmin_nextid)
+          val referencesource_doc = referencesource.transform(doc, fiadmin_nextid)
+          val referencecomplement_doc = referencecomplement.transform(doc, fiadmin_nextid)
+          val referencelocal_doc = referencelocal.transform(doc, fiadmin_nextid)
+          val descriptor_docs = descriptor.transform(doc, fiadmin_nextid)
           if (referenceanalytic_doc != null) {
             merged_doc.put("referenceanalytic", referenceanalytic_doc)
           }

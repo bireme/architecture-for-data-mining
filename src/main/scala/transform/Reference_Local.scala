@@ -45,5 +45,5 @@ class Reference_Local extends Base_Reference:
     *
     * @param pk
     */
-  def set_source(pk: Int) =
+  def set_source(pk: Int) : Unit =
     this.fields.put("source", pk)
