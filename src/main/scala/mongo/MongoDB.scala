@@ -20,14 +20,14 @@ class MongoDB():
     val pass = Settings.getConf("MONGODB_PASSWORD")
     val db = Settings.getConf("MONGODB_DATABASE")
 
-    this.client = MongoClient(s"mongodb://$user:$pass@$host:$port")
-    this.database = client.getDatabase(db)
+    client = MongoClient(s"mongodb://$user:$pass@$host:$port")
+    database = client.getDatabase(db)
 
   def set_collection(name: String) =
-    this.collection = this.database.getCollection(name)
+    collection = database.getCollection(name)
 
   def drop_collection() =
-    val result = this.collection.drop()
+    val result = collection.drop()
     result.subscribe(
       Void => {},
       (e: Throwable) => {println(s"Error: $e")},
@@ -36,10 +36,10 @@ class MongoDB():
     Await.ready(result.toFuture, 30.seconds)
 
   def insert_documents(documents: Array[Document]) =
-    Await.result(this.collection.insertMany(documents).toFuture(), 30.seconds)
+    Await.result(collection.insertMany(documents).toFuture(), 30.seconds)
 
   def insert_document(document: Document) =
-    Await.result(this.collection.insertOne(document).toFuture(), 30.seconds)
+    Await.result(collection.insertOne(document).toFuture(), 30.seconds)
 
   def close() =
-    this.client.close()
+    client.close()

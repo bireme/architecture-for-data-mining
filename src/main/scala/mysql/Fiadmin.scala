@@ -7,15 +7,22 @@ import java.sql.{Connection,DriverManager}
   * An abstraction to handle Fi-Admin data in MySQL
   */
 object Fiadmin:
-  val url = Settings.getConf("FIADMIN_MYSQL_URL")
   val driver = "com.mysql.cj.jdbc.Driver"
+
+  val url = Settings.getConf("FIADMIN_MYSQL_URL")
   val username = Settings.getConf("FIADMIN_MYSQL_USER")
   val password = Settings.getConf("FIADMIN_MYSQL_PASSWORD")
-  var connection:Connection = _
+  var connection : Connection = _
+
+  val url_source = Settings.getConf("FIADMIN_MYSQL_SOURCE_URL")
+  val username_source = Settings.getConf("FIADMIN_MYSQL_SOURCE_USER")
+  val password_source = Settings.getConf("FIADMIN_MYSQL_SOURCE_PASSWORD")
+  var connection_source : Connection = _
 
   try {
     Class.forName(driver)
     connection = DriverManager.getConnection(url, username, password)
+    connection_source = DriverManager.getConnection(url_source, username_source, password_source)
   } catch {
     case e: Exception => e.printStackTrace
   }
@@ -32,18 +39,18 @@ object Fiadmin:
   def get_database_id(database: String): String =
     var id: String = null
 
-    if (this.database_id_cache.contains(database)) {
-      id = this.database_id_cache(database)
+    if (database_id_cache.contains(database)) {
+      id = database_id_cache(database)
     } else {
       try {
-        val statement = this.connection.createStatement
+        val statement = connection.createStatement
         val rs = statement.executeQuery(
           s"select id from database_database where acronym = '$database'"
         )
         while (rs.next) {
           id = rs.getString("id")
         }
-        this.database_id_cache += database -> id
+        database_id_cache += database -> id
       } catch {
         case e: Exception => e.printStackTrace
       }
@@ -63,18 +70,18 @@ object Fiadmin:
     var is_code_valid: Boolean = false
 
     val cache_key = s"$field$code"
-    if (this.is_code_valid_cache.contains(cache_key)) {
-      is_code_valid = this.is_code_valid_cache(cache_key)
+    if (is_code_valid_cache.contains(cache_key)) {
+      is_code_valid = is_code_valid_cache(cache_key)
     } else {
       try {
-        val statement = this.connection.createStatement
+        val statement = connection.createStatement
         val rs = statement.executeQuery(
           s"SELECT id FROM utils_auxcode WHERE field='$field' and code='$code'"
         )
         while (rs.next) {
           is_code_valid = true
         }
-        this.is_code_valid_cache += cache_key -> is_code_valid
+        is_code_valid_cache += cache_key -> is_code_valid
       } catch {
         case e: Exception => e.printStackTrace
       }
@@ -93,18 +100,120 @@ object Fiadmin:
   def get_country_code(country: String): String =
     var id: String = null
 
-    if (this.get_country_code_cache.contains(country)) {
-      id = this.get_country_code_cache(country)
+    if (get_country_code_cache.contains(country)) {
+      id = get_country_code_cache(country)
     } else {
       try {
-        val statement = this.connection.createStatement
+        val statement = connection.createStatement
         val rs = statement.executeQuery(
           s"select code from utils_country left join utils_countrylocal on utils_country.id=country_id where utils_country.name='$country' OR utils_countrylocal.name='$country'"
         )
         while (rs.next) {
           id = rs.getString("code")
         }
-        this.get_country_code_cache += country -> id
+        get_country_code_cache += country -> id
+      } catch {
+        case e: Exception => e.printStackTrace
+      }
+    }
+    return id
+
+  /**
+    * Queries the Fi-Admin MySQL database for the Source ID 
+    * for a SAS document.
+    * Status priority = 1, 0, -3, -1
+    * Each request is cached for optimization.
+    */
+  var get_source_sas_id_cache: Map[String, String] = Map()
+  def get_source_sas_id(journal : String, year : String, volume : String, number : String): String =
+    var id: String = null
+
+    val cache_key = s"$journal$year$volume$number"
+    if (get_source_sas_id_cache.contains(cache_key)) {
+      id = get_source_sas_id_cache(cache_key)
+    } else {
+      var sql_volume = ""
+      if (volume.nonEmpty) {
+        sql_volume = s"a.volume_serial = '$volume' AND "
+      }
+
+      var sql_number = ""
+      if (number.nonEmpty) {
+        sql_number = s"a.issue_number = '$number' AND "
+      }
+
+      try {
+        val statement = connection_source.createStatement
+        val rs = statement.executeQuery(s"""
+          SELECT
+            b.id as code
+          FROM 
+            biblioref_referencesource AS a, 
+            biblioref_reference AS b 
+          WHERE 
+            a.title_serial = '$journal' AND 
+            a.reference_ptr_id = b.id AND
+            $sql_volume
+            $sql_number
+            LEFT(b.publication_date_normalized,4) = '$year'
+          ORDER BY
+            CASE 
+              WHEN b.status = -1 THEN -4
+              ELSE b.status
+            END DESC
+          LIMIT 1
+          """
+        )
+        while (rs.next) {
+          id = rs.getString("code")
+        }
+        get_source_sas_id_cache += cache_key -> id
+      } catch {
+        case e: Exception => e.printStackTrace
+      }
+    }
+    return id
+
+  /**
+    * Queries the Fi-Admin MySQL database for the Source ID 
+    * for a MNT document.
+    * Status priority = 1, 0, -3, -1
+    * Each request is cached for optimization.
+    */
+  var get_source_mnt_id_cache: Map[String, String] = Map()
+  def get_source_mnt_id(title : String, year : String, literature : String): String =
+    var id: String = null
+
+    val cache_key = s"$title$year$literature"
+    if (get_source_mnt_id_cache.contains(cache_key)) {
+      id = get_source_mnt_id_cache(cache_key)
+    } else {
+      try {
+        val statement = connection_source.createStatement
+        val rs = statement.executeQuery(s"""
+          SELECT 
+            b.id as code 
+          FROM 
+            biblioref_referencesource AS a, 
+            biblioref_reference AS b 
+          WHERE 
+            b.literature_type = '$literature' AND 
+            NOT b.treatment_level LIKE 'am%' AND
+            a.reference_ptr_id=b.id AND 
+            a.title_monographic LIKE '%$title%' AND
+            LEFT(b.publication_date_normalized,4) = '$year'
+          ORDER BY
+            CASE 
+              WHEN b.status = -1 THEN -4
+              ELSE b.status
+            END DESC
+          LIMIT 1
+          """
+        )
+        while (rs.next) {
+          id = rs.getString("code")
+        }
+        get_source_mnt_id_cache += cache_key -> id
       } catch {
         case e: Exception => e.printStackTrace
       }
@@ -121,8 +230,8 @@ object Fiadmin:
     var result: List[String] = List("", "")
 
     val cache_key = s"$title_serial$issn"
-    if (this.get_title_and_issn_cache.contains(cache_key)) {
-      result = this.get_title_and_issn_cache(cache_key)
+    if (get_title_and_issn_cache.contains(cache_key)) {
+      result = get_title_and_issn_cache(cache_key)
     } else {
       var sql_title = ""
       var sql_issn = ""
@@ -137,7 +246,7 @@ object Fiadmin:
       }
 
       try {
-        val statement = this.connection.createStatement
+        val statement = connection.createStatement
         val rs = statement.executeQuery(
           s"""
           SELECT 
@@ -169,7 +278,7 @@ object Fiadmin:
           val issn_new = rs.getString("issn")
           result = List(title_serial_new, issn_new)
         }
-        this.get_title_and_issn_cache += cache_key -> result
+        get_title_and_issn_cache += cache_key -> result
       } catch {
         case e: Exception => e.printStackTrace
       }
@@ -188,11 +297,11 @@ object Fiadmin:
   def get_decs_qualifier(qualifier: String): List[String] =
     var result: List[String] = null
 
-    if (this.get_decs_qualifier_cache.contains(qualifier)) {
-      result = this.get_decs_qualifier_cache(qualifier)
+    if (get_decs_qualifier_cache.contains(qualifier)) {
+      result = get_decs_qualifier_cache(qualifier)
     } else {
       try {
-        val statement = this.connection.createStatement
+        val statement = connection.createStatement
         val rs = statement.executeQuery(
           s"""
           SELECT 
@@ -203,7 +312,6 @@ object Fiadmin:
             `thesaurus_identifierconceptlistqualif` AS b,
             `thesaurus_identifierqualif` AS c 
           WHERE 
-            a.`language_code` = 'ES' AND 
             a.`term_thesaurus` = '1' AND
             a.`concept_preferred_term` = 'Y' AND 
             a.`record_preferred_term`= 'Y' AND
@@ -220,7 +328,7 @@ object Fiadmin:
           val decs_qualifier = rs.getString("term_string")
           result = List(id, decs_qualifier)
         }
-        this.get_decs_qualifier_cache += qualifier -> result
+        get_decs_qualifier_cache += qualifier -> result
       } catch {
         case e: Exception => e.printStackTrace
       }
@@ -239,11 +347,11 @@ object Fiadmin:
   def get_decs_descriptor(descriptor: String): String =
     var id: String = ""
 
-    if (this.get_decs_descriptor_cache.contains(descriptor)) {
-      id = this.get_decs_descriptor_cache(descriptor)
+    if (get_decs_descriptor_cache.contains(descriptor)) {
+      id = get_decs_descriptor_cache(descriptor)
     } else {
       try {
-        val statement = this.connection.createStatement
+        val statement = connection.createStatement
         val rs = statement.executeQuery(
           s"""
           SELECT 
@@ -266,7 +374,7 @@ object Fiadmin:
         while (rs.next) {
           val id = "^d" + rs.getString("decs_code")
         }
-        this.get_decs_descriptor_cache += descriptor -> id
+        get_decs_descriptor_cache += descriptor -> id
       } catch {
         case e: Exception => e.printStackTrace
       }
@@ -285,18 +393,18 @@ object Fiadmin:
   def is_country_code_valid(country_code: String): Boolean =
     var is_country_valid: Boolean = false
 
-    if (this.is_country_code_valid_cache.contains(country_code)) {
-      is_country_valid = this.is_country_code_valid_cache(country_code)
+    if (is_country_code_valid_cache.contains(country_code)) {
+      is_country_valid = is_country_code_valid_cache(country_code)
     } else {
       try {
-        val statement = this.connection.createStatement
+        val statement = connection.createStatement
         val rs = statement.executeQuery(
           s"select id from utils_country where code='$country_code'"
         )
         while (rs.next) {
           is_country_valid = true
         }
-        this.is_country_code_valid_cache += country_code -> is_country_valid
+        is_country_code_valid_cache += country_code -> is_country_valid
       } catch {
         case e: Exception => e.printStackTrace
       }
@@ -315,18 +423,18 @@ object Fiadmin:
   def is_cc_valid(cc_code: String): Boolean =
     var is_cc_valid: Boolean = false
 
-    if (this.is_cc_valid_cache.contains(cc_code)) {
-      is_cc_valid = this.is_cc_valid_cache(cc_code)
+    if (is_cc_valid_cache.contains(cc_code)) {
+      is_cc_valid = is_cc_valid_cache(cc_code)
     } else {
       try {
-        val statement = this.connection.createStatement
+        val statement = connection.createStatement
         val rs = statement.executeQuery(
           s"select id from institution_institution where cc_code='$cc_code'"
         )
         while (rs.next) {
           is_cc_valid = true
         }
-        this.is_cc_valid_cache += cc_code -> is_cc_valid
+        is_cc_valid_cache += cc_code -> is_cc_valid
       } catch {
         case e: Exception => e.printStackTrace
       }
@@ -345,18 +453,18 @@ object Fiadmin:
   def is_issn_lilacs(issn: String): Boolean =
     var is_issn_lilacs: Boolean = false
 
-    if (this.is_issn_lilacs_cache.contains(issn)) {
-      is_issn_lilacs = this.is_issn_lilacs_cache(issn)
+    if (is_issn_lilacs_cache.contains(issn)) {
+      is_issn_lilacs = is_issn_lilacs_cache(issn)
     } else {
       try {
-        val statement = this.connection.createStatement
+        val statement = connection.createStatement
         val rs = statement.executeQuery(
           s"select title_title.id from title_title, title_indexrange where title_title.id=title_indexrange.title_id and title_indexrange.index_code_id=17 and issn='$issn'"
         )
         while (rs.next) {
           is_issn_lilacs = true
         }
-        this.is_issn_lilacs_cache += issn -> is_issn_lilacs
+        is_issn_lilacs_cache += issn -> is_issn_lilacs
       } catch {
         case e: Exception => e.printStackTrace
       }
@@ -375,18 +483,18 @@ object Fiadmin:
   def is_journal_title_lilacs(journal_title: String): Boolean =
     var is_journal_title_lilacs: Boolean = false
 
-    if (this.is_journal_title_lilacs_cache.contains(journal_title)) {
-      is_journal_title_lilacs = this.is_journal_title_lilacs_cache(journal_title)
+    if (is_journal_title_lilacs_cache.contains(journal_title)) {
+      is_journal_title_lilacs = is_journal_title_lilacs_cache(journal_title)
     } else {
       try {
-        val statement = this.connection.createStatement
+        val statement = connection.createStatement
         val rs = statement.executeQuery(
           s"select title_title.id from title_title, title_indexrange where title_title.id=title_indexrange.title_id and title_indexrange.index_code_id=17 and shortened_title='$journal_title'"
         )
         while (rs.next) {
           is_journal_title_lilacs = true
         }
-        this.is_journal_title_lilacs_cache += journal_title -> is_journal_title_lilacs
+        is_journal_title_lilacs_cache += journal_title -> is_journal_title_lilacs
       } catch {
         case e: Exception => e.printStackTrace
       }
@@ -397,4 +505,5 @@ object Fiadmin:
     * Closes the current MySQL connection
     */
   def close() =
-    this.connection.close
+    connection.close
+    connection_source.close

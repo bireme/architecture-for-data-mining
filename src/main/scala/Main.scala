@@ -23,7 +23,6 @@ import exporter.JsonExport
   mongodb.set_collection("01_isiscopy")
   mongodb.insert_documents(documents)
   Thread.sleep(10000)
-  
 
   Transformer.transform_docs()
 

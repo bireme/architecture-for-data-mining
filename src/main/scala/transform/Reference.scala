@@ -100,7 +100,7 @@ class Reference extends Base_Reference:
       * Sets the created and updated date and time with
       * timezone
       */
-    def set_created_updated_datetime() =
+    def set_created_updated_datetime() : Unit =
       val tz_datetime = ZonedDateTime.now().toString()
       this.fields.put("created_time", tz_datetime)
       this.fields.put("updated_time", tz_datetime)
@@ -112,7 +112,7 @@ class Reference extends Base_Reference:
       *
       * @return if v5 and v6 fields are both valid
       */
-    def transform_literature_type(): Boolean =
+    def transform_literature_type() : Boolean =
       val value_v2 = get_first_value("2")
       val value_v5 = get_first_value("5")
       val value_v6 = get_first_value("6")
@@ -132,7 +132,7 @@ class Reference extends Base_Reference:
       * Simply adds the content of the field isis_field as is and issues
       * a warning if the code is not available in FI-Admin's MySQL database
       */
-    def transform_field(fiadmin_field: String, isis_field: String) =
+    def transform_field(fiadmin_field: String, isis_field: String) : Unit =
       var values = get_all_values(isis_field)
       val value_v2 = get_first_value("2")
       var i = 0
@@ -152,7 +152,7 @@ class Reference extends Base_Reference:
       * a warning if the code is not available in MongoDB database
       * for the subfield _b
       */
-    def transform_descriptive_information() =
+    def transform_descriptive_information() : Unit =
       this.set_field_as_document("descriptive_information", "38")
 
       val value_v2 = get_first_value("2")
@@ -170,7 +170,7 @@ class Reference extends Base_Reference:
       * a warning if the code is not available in FI-Admin's MySQL database
       * for the subfield _i
       */
-    def transform_abstract() =
+    def transform_abstract() : Unit =
       val value_v2 = get_first_value("2")
       val values = get_all_values_as_document("83")
       var i = 0
@@ -197,7 +197,7 @@ class Reference extends Base_Reference:
       * a warning if the code is not available in FI-Admin's MySQL database
       * for the subfield _i
       */
-    def transform_author_keyword() =
+    def transform_author_keyword() : Unit =
       val value_v2 = get_first_value("2")
       val values = get_all_values_as_document("85")
       var i = 0
@@ -224,7 +224,7 @@ class Reference extends Base_Reference:
       * a warning if the code is not available in FI-Admin's MySQL database
       * for the subfields _i, _q and _y
       */
-    def transform_electronic_address() =
+    def transform_electronic_address() : Unit =
       var values_v8 = get_all_values_as_document("8")
       if (values_v8.size > 0) {
         val value_v2 = get_first_value("2")
@@ -286,7 +286,7 @@ class Reference extends Base_Reference:
       * Simply adds the content of the field v76 as is and issues
       * a warning if the code is not available in FI-Admin's MySQL database
       */
-    def transform_check_tags() =
+    def transform_check_tags() : Unit =
       val value_v2 = get_first_value("2")
       val values = get_all_values_as_document("76")
       var i = 0
@@ -312,7 +312,7 @@ class Reference extends Base_Reference:
       * Simply adds the content of the field v1 as is and issues
       * a warning if the code is not available in FI-Admin's MySQL database
       */
-    def transform_publication_date_normalized() =
+    def transform_publication_date_normalized() : Unit =
       this.set_field_as_string("publication_date_normalized", "65")
 
       val values_v65 = get_all_values("65")
@@ -335,7 +335,7 @@ class Reference extends Base_Reference:
       * Simply adds the content of the field v1 as is and issues
       * a warning if the code is not available in FI-Admin's MySQL database
       */
-    def transform_cooperative_center_code() =
+    def transform_cooperative_center_code() : Unit =
       this.set_field_as_string("cooperative_center_code", "1")
 
       val value_v1 = get_first_value("1")
@@ -350,7 +350,7 @@ class Reference extends Base_Reference:
       * The format returned here is joins the database ID (v2) and a database code
       * defined in the settings file.
       */
-    def transform_interoperability_source() =
+    def transform_interoperability_source() : Unit =
       var field_value: Document = null
 
       val value_v2 = get_first_value("2")
@@ -372,7 +372,7 @@ class Reference extends Base_Reference:
       * If it is a journal, checks the ISSN or the journal title.
       * Otherwise, checks for the database name.
       */
-    def transform_lilacs_indexed() =
+    def transform_lilacs_indexed() : Unit =
       var field_value: Boolean = false
 
       val value_v5 = get_first_value("5")
@@ -411,7 +411,7 @@ class Reference extends Base_Reference:
       * Transforms the "reference_title" field for FI-Admin.
       * The format returned here is similar to the citation form of a paper.
       */
-    def transform_reference_title() =
+    def transform_reference_title() : Unit =
       var field_value: String = ""
 
       val value_v30 = get_first_value("30")
@@ -455,7 +455,7 @@ class Reference extends Base_Reference:
       * This method aims to replace the extended version for the code when possible.
       * If not, it will check for the eletronic address field and then will place a specific code.
       */
-    def transform_item_form() =
+    def transform_item_form() : Unit =
       // Fetches the field value
       val field_value: String = get_first_value("110").toLowerCase()
       var new_field_value: String = ""
@@ -495,7 +495,7 @@ class Reference extends Base_Reference:
       * Fetched the Fi-admin code for each database entry 
       * (field v4) in this record.
       */
-    def transform_indexed_database() =
+    def transform_indexed_database() : Unit =
       var indexed_databases: List[String] = List()
       val values_v4 = get_all_values("4")
       values_v4.foreach(value_v4 =>

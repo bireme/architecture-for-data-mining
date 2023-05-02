@@ -32,10 +32,10 @@ object OutParser:
         val doc2 = line_arr(5).trim
 
         if (is_fiadmin) {
-          this.set_doc_as_duplicate(doc1, doc2)
+          set_doc_as_duplicate(doc1, doc2)
         } else {
-          this.set_doc_as_duplicate(doc1)
-          this.set_doc_as_duplicate(doc2.toInt)
+          set_doc_as_duplicate(doc1)
+          set_doc_as_duplicate(doc2.toInt)
         }
       }
     }
@@ -55,10 +55,10 @@ object OutParser:
         val doc2 = line_arr(5).trim
 
         if (is_fiadmin) {
-          this.set_doc_as_duplicate(doc1, doc2)
+          set_doc_as_duplicate(doc1, doc2)
         } else {
-          this.set_doc_as_duplicate(doc1)
-          this.set_doc_as_duplicate(doc2.toInt)
+          set_doc_as_duplicate(doc1)
+          set_doc_as_duplicate(doc2.toInt)
         }
       }
     }
@@ -82,10 +82,10 @@ object OutParser:
         val doc2 = line_arr(5).trim
 
         if (is_fiadmin) {
-          this.set_doc_as_duplicate(doc1, doc2)
+          set_doc_as_duplicate(doc1, doc2)
         } else {
-          this.set_doc_as_duplicate(doc1)
-          this.set_doc_as_duplicate(doc2.toInt)
+          set_doc_as_duplicate(doc1)
+          set_doc_as_duplicate(doc2.toInt)
         }
       }
     }
@@ -122,17 +122,17 @@ object OutParser:
           val doc2 = line_arr(5).trim
 
           if (is_fiadmin) {
-            this.set_doc_as_duplicate(doc1, doc2)
+            set_doc_as_duplicate(doc1, doc2)
           } else {
-            this.set_doc_as_duplicate(doc1)
-            this.set_doc_as_duplicate(doc2.toInt)
+            set_doc_as_duplicate(doc1)
+            set_doc_as_duplicate(doc2.toInt)
           }
         }
       }
     }
 
   def remove_field(doc_id : Integer, field_name : String) =
-    var update = this.mongodb_transformed.collection.updateOne(
+    var update = mongodb_transformed.collection.updateOne(
       and(
         equal("reference.pk", doc_id),
         exists(field_name, true)
@@ -140,20 +140,15 @@ object OutParser:
       unset(field_name)
     )
 
-    //var processing = true
     update.subscribe(
       Void => {},
       (e: Throwable) => {println(s"Error: $e")},
-      //() => {processing = false}
       () => {}
     )
-    Await.ready(update.toFuture, 30.seconds)
-    /*while (processing) {
-      Thread.sleep(100)
-    }*/
+    Await.ready(update.toFuture, 60.seconds)
 
   def set_doc_as_duplicate(doc_id : Integer, id_fiadmin : String = null) =
-    var doc = this.mongodb_transformed.collection.find(
+    var doc = mongodb_transformed.collection.find(
       and(
         equal("reference.pk", doc_id),
         exists("referenceduplicate", false)
@@ -246,7 +241,7 @@ object OutParser:
 
         obj.put("referenceduplicate", new_doc)
 
-        this.mongodb_transformed.collection.updateOne(
+        mongodb_transformed.collection.updateOne(
           equal("reference.pk", doc_id),
           Document("$set" -> obj)
         ).toFuture()

@@ -128,7 +128,7 @@ class IsisDB(var iso_path: String = ""):
 
         for line <- field_pattern.findAllMatchIn(record.trim()) do
           val field_number = line.group(1)
-          var content = this.parse_field(line.group(2))
+          var content = parse_field(line.group(2))
           
           if (doc.contains(field_number)) {
             if (doc.get(field_number).get.isArray()) {
