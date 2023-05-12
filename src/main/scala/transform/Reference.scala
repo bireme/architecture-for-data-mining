@@ -300,7 +300,7 @@ class Reference extends Base_Reference:
             value_doc.put("text", BsonString(""))
             values.set(i, value_doc)
             
-            logger.warn(s"biblioref.reference;$value_v2;v76;Not found in FI Admin - $value")
+            logger.warn(s"biblioref.reference;$value_v2;v76;Not found in FI Admin - $subfield_value")
           }
         }
         i += 1

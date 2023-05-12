@@ -108,7 +108,7 @@ class Reference_Source extends Base_Reference:
         val country_code = Fiadmin.get_country_code(value_v67)
         if (country_code == null) {
           val value_v2 = get_first_value("2")
-          logger.warn(s"biblioref.referencecomplement;$value_v2;v67;Not found in FI Admin - $value_v67")
+          logger.warn(s"biblioref.referencesource;$value_v2;v67;Not found in FI Admin - $value_v67")
           values_v67 = values_v67.updated(i, "")
         } else {
           values_v67 = values_v67.updated(i, value_v67)
