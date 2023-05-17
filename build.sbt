@@ -15,5 +15,6 @@ lazy val root = project
     libraryDependencies += "com.typesafe" % "config" % "1.4.2",
     libraryDependencies += "mysql" % "mysql-connector-java" % "8.0.31",
     libraryDependencies += "com.outr" %% "scribe" % "3.10.4",
-    libraryDependencies += "com.outr" %% "scribe-file" % "3.10.4"
+    libraryDependencies += "com.outr" %% "scribe-file" % "3.10.4",
+    libraryDependencies += "com.github.tototoshi" %% "scala-csv" % "1.3.10"
   )

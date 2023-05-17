@@ -3,15 +3,21 @@ import config.Settings
 
 import java.nio.file.Paths
 import java.nio.file.Files
+import java.io.File
 import java.io.FileNotFoundException
 import java.lang.RuntimeException
 import scala.sys.process._
 import scala.util.matching.Regex
 import org.mongodb.scala._
+import org.mongodb.scala.model._
 import org.mongodb.scala.bson.BsonObjectId
 import org.mongodb.scala.bson._
 import org.mongodb.scala.bson.collection.mutable.Document
+import scala.concurrent.*
+import scala.concurrent.duration.*
 import scala.collection.JavaConverters._
+import com.github.tototoshi.csv._
+import mongo.MongoDB
 
 
 /**
@@ -30,6 +36,7 @@ class IsisDB(var iso_path: String = ""):
   val mxcp_path = s"$isis_utils_path/mxcp"
   val retag_path = s"$isis_utils_path/retag"
   val isis_db_path = s"$project_path/data/isis"
+  val replace_csv_path = s"$project_path/data/replace"
 
   override def toString: String = iso_path
 
@@ -45,9 +52,19 @@ class IsisDB(var iso_path: String = ""):
     return file_exists
 
   /**
+    * Returns a sorted list of files in a path
+    */
+  def getListOfFiles(path: String): List[String] = {
+    val file = new File(path)
+    file.listFiles.filter(_.isFile)
+      .filter(_.getName.endsWith("csv"))
+      .map(_.getPath).toSeq.sorted.toList
+  }
+
+  /**
     * Cleans the MST ISIS database with mxcp and retag utils
     */
-  def clean_mst() =
+  def clean_mst() : Unit =
     val mxcp_cmd = s"$mxcp_path /tmp/isisdb create=/tmp/isisdb_clean clean"
     mxcp_cmd.!!
 
@@ -61,7 +78,7 @@ class IsisDB(var iso_path: String = ""):
   /**
     * Mounts an ISIS database based on an ISO file
     */
-  def mount_mst() =
+  def mount_mst() : Unit =
     val mx_cmd = s"$mx_path iso=$iso_path create=/tmp/isisdb -all now"
     try {
       mx_cmd.!!
@@ -151,5 +168,66 @@ class IsisDB(var iso_path: String = ""):
         documents = documents :+ doc
     }
     return documents
+
+  /**
+    * Batch replaces content for a field and subfield
+    * given a list of CSV files
+    */
+  def batch_replace(mongodb : MongoDB): Unit =
+    val csvs_replace_path: List[String] = getListOfFiles(replace_csv_path)
+    for csv_replace_path <- csvs_replace_path do
+      println(csv_replace_path)
+      val reader = CSVReader.open(new File(csv_replace_path))
+
+      reader.foreach(row => 
+        val field = row(0)
+        val subfield = row(1)
+        val old_value = row(2)
+        val new_value = row(3)
+
+        val commands = List(
+          // Updates non-repetitive fields
+          UpdateManyModel.apply(
+            Document("$and" -> 
+              List(
+                Document(field+".1" -> Document("$exists" -> false)),
+                Document(field -> Document(subfield -> old_value))
+              )
+            ), 
+            Document("$set" -> Document(field+"."+subfield -> new_value))
+          ),
+          // Updates repetitive fields
+          UpdateManyModel.apply(
+            Document("$and" -> 
+              List(
+                Document(field+".1" -> Document("$exists" -> true)),
+                Document(field -> Document(subfield -> old_value))
+              )
+            ), 
+            Document("$set" -> Document(field+".$."+subfield -> new_value))
+          )
+        )
+        Await.result(mongodb.collection.bulkWrite(commands).toFuture(), 30.seconds)
+      )
+
+      reader.close()
+
+  /**
+    * Import the ISIS data into MongoDB
+    */
+  def import_data(): Unit =
+    mount_mst()
+    val documents = parse_data()
+
+    // Insert data into mongodb (first erases the collection)
+    val mongodb = MongoDB()
+    mongodb.connect()
+    mongodb.set_collection("01_isiscopy")
+    mongodb.drop_collection()
+    mongodb.set_collection("01_isiscopy")
+    mongodb.insert_documents(documents)
+    Thread.sleep(10000)
+
+    batch_replace(mongodb)
 
 end IsisDB
