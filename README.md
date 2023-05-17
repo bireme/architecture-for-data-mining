@@ -10,13 +10,30 @@
 * Scribe 3.10.4
 * Docker 20.10
 
-## CLI Usage
+## Setting up batch-replace (Optional)
+Create numbered CSV files in `./data/replace/` with the following format:
+`FIELD,SUBFIELD,OLD VALUE,NEW VALUE`
+
+Example:
+`4,text,Web,NewWeb`
+`8,_i,pt,pt-br`
+
+This replace feature is applied to the `01_isiscopy` collection immediately after all records are migrated from ISIS to MongoDB.
+
+A good convetion for CSV naming is the following:
+`01_field_30.csv`
+`02_field_08.csv`
+
+This feature will list all files alphabetically from the `./data/replace/` folder and run each in order.
+
+## How to run
+### CLI
 
 1. Set env variable `ISIS2MONGO_SETTINGS` with `cli`.
 1. Edit the `src/main/resources/cli.conf` config file.
-1. Run `sbt -Dfile.encoding=ISO-8859-1 run` (Enforce ISO-8859-1 encoding for proper ISIS database character manipulation)
+1. Run `sbt -Dfile.encoding=ISO-8859-1 run` (Enforce ISO-8859-1 encoding for proper ISIS database character manipulation) or `sh run_cli.sh`
 
-## Docker Usage
+### Docker
 
 1. Edit the `src/main/resources/docker.conf` config file.
 1. `docker compose up` will run a service with MongoDB and another with ISIS2MongoDB that will take as input the env variable defined in the step above.
