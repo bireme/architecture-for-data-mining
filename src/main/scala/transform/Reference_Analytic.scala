@@ -67,7 +67,11 @@ class Reference_Analytic extends Base_Reference:
     val value_v32 = get_first_value("32")
     val value_v35 = get_first_value("35")
     val value_v65 = get_first_value("65")
-    val year = value_v65.substring(0, 4)
+    
+    var year = ""
+    if (value_v65 != "") {
+      year = value_v65.substring(0, 4)
+    }
     
     var source_id : String = null
     if (value_v30.nonEmpty && year.nonEmpty) { // SAS
