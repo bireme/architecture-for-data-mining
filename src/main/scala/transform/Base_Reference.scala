@@ -25,7 +25,9 @@ class Base_Reference():
       if (this.doc.get(key).get.isArray()) {
         this.fields.put(name, this.doc.get(key).get)
       } else {
-        this.fields.put(name, this.doc.get(key).get.asDocument().getString("text").getValue().trim())
+        if (this.doc.get(key).get.asDocument().keySet.contains("text") == true) {
+          this.fields.put(name, this.doc.get(key).get.asDocument().getString("text").getValue().trim())
+        }
       }
     }
 
