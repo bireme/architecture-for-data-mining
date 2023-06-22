@@ -26,17 +26,21 @@ A good convetion for CSV naming is the following:
 
 This feature will list all files alphabetically from the `./data/replace/` folder and run each in order.
 
-## How to run
-### CLI
+## Installing
 
-1. Set env variable `ISIS2MONGO_SETTINGS` with `cli`.
-1. Edit the `src/main/resources/cli.conf` config file.
-1. Run `sbt -Dfile.encoding=ISO-8859-1 run` (Enforce ISO-8859-1 encoding for proper ISIS database character manipulation) or `sh run_cli.sh`
+1. Clone repository
+1. Add your CSV files in the `data/replace/` folder (optional)
+1. Place the Dedup indexes folders `lilacs_MNT`, `lilacs_MNTam` and `lilacs_Sas` in `data/Dedup/indexes`
+1. Edit the MONGODB, ISO_PATH, INTEROPERABILITY_SOURCE, FIADMIN_MYSQL params in `src/main/resources/docker.conf` (for Docker) OR `src/main/resources/cli.conf` (for CLI) config file
 
-### Docker
+### How to run in Docker
 
-1. Edit the `src/main/resources/docker.conf` config file.
-1. `docker compose up` will run a service with MongoDB and another with ISIS2MongoDB that will take as input the env variable defined in the step above.
+1. `docker-compose build` will compile the whole project.
+1. `docker compose up` will run a service with MongoDB and another with ISIS2MongoDB.
+
+### How to run in CLI
+
+1. Run `sh run_cli.sh`
 
 ## Manipulating ISIS databases
 
