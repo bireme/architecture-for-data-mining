@@ -9,7 +9,7 @@ services:
     extra_hosts:
     - "host.docker.internal:host-gateway"
     volumes:
-      - ~/isis_data/logs:/isis-to-mongodb/logs
+      - ./logs:/isis-to-mongodb/logs
     links:
     - mongodb
     depends_on:
@@ -25,7 +25,7 @@ services:
     - MONGO_INITDB_ROOT_PASSWORD=root
     - MONGO_INITDB_DATABASE=isismongodb
     volumes:
-      - ~/isis_data/mongodb:/data/db
+      - ./data/mongodb:/data/db
     ports:
     - 27017:27017
     restart: always
