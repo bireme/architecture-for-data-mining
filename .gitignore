@@ -34,8 +34,10 @@ metals.sbt
 # ISIS FILES
 data/isis/
 data/Dedup/indexes/
+data/mongodb/*
+!data/mongodb/README.md
 
-logs/
+logs/*.log
 temp/
 
-export/
+export/*.json
