@@ -1,6 +1,6 @@
 package mysql
 import config.Settings
-import java.sql.{Connection,DriverManager}
+import java.sql.{Connection,DriverManager,PreparedStatement}
 
 
 /**
@@ -42,11 +42,12 @@ object Fiadmin:
     if (database_id_cache.contains(database)) {
       id = database_id_cache(database)
     } else {
+      val sql = "select id from database_database where acronym = ?"
+      val statement: PreparedStatement = connection.prepareStatement(sql)
+      statement.setString(1, database)
+
       try {
-        val statement = connection.createStatement
-        val rs = statement.executeQuery(
-          s"select id from database_database where acronym = '$database'"
-        )
+        val rs = statement.executeQuery
         while (rs.next) {
           id = rs.getString("id")
         }
@@ -73,11 +74,13 @@ object Fiadmin:
     if (is_code_valid_cache.contains(cache_key)) {
       is_code_valid = is_code_valid_cache(cache_key)
     } else {
+      val sql = "SELECT id FROM utils_auxcode WHERE field=? and code=?"
+      val statement: PreparedStatement = connection.prepareStatement(sql)
+      statement.setString(1, field)
+      statement.setString(2, code)
+
       try {
-        val statement = connection.createStatement
-        val rs = statement.executeQuery(
-          s"SELECT id FROM utils_auxcode WHERE field='$field' and code='$code'"
-        )
+        val rs = statement.executeQuery
         while (rs.next) {
           is_code_valid = true
         }
@@ -103,11 +106,13 @@ object Fiadmin:
     if (get_country_code_cache.contains(country)) {
       id = get_country_code_cache(country)
     } else {
+      val sql = "select code from utils_country left join utils_countrylocal on utils_country.id=country_id where utils_country.name=? OR utils_countrylocal.name=?"
+      val statement: PreparedStatement = connection.prepareStatement(sql)
+      statement.setString(1, country)
+      statement.setString(2, country)
+
       try {
-        val statement = connection.createStatement
-        val rs = statement.executeQuery(
-          s"select code from utils_country left join utils_countrylocal on utils_country.id=country_id where utils_country.name='$country' OR utils_countrylocal.name='$country'"
-        )
+        val rs = statement.executeQuery
         while (rs.next) {
           id = rs.getString("code")
         }
@@ -142,28 +147,31 @@ object Fiadmin:
         sql_number = s"a.issue_number = '$number' AND "
       }
 
+      val sql = s"""
+        SELECT
+          b.id as code
+        FROM 
+          biblioref_referencesource AS a, 
+          biblioref_reference AS b 
+        WHERE 
+          a.title_serial = ? AND 
+          a.reference_ptr_id = b.id AND
+          $sql_volume
+          $sql_number
+          LEFT(b.publication_date_normalized,4) = ?
+        ORDER BY
+          CASE 
+            WHEN b.status = -1 THEN -4
+            ELSE b.status
+          END DESC
+        LIMIT 1
+      """
+      val statement: PreparedStatement = connection.prepareStatement(sql)
+      statement.setString(1, journal)
+      statement.setString(2, year)
+
       try {
-        val statement = connection_source.createStatement
-        val rs = statement.executeQuery(s"""
-          SELECT
-            b.id as code
-          FROM 
-            biblioref_referencesource AS a, 
-            biblioref_reference AS b 
-          WHERE 
-            a.title_serial = '$journal' AND 
-            a.reference_ptr_id = b.id AND
-            $sql_volume
-            $sql_number
-            LEFT(b.publication_date_normalized,4) = '$year'
-          ORDER BY
-            CASE 
-              WHEN b.status = -1 THEN -4
-              ELSE b.status
-            END DESC
-          LIMIT 1
-          """
-        )
+        val rs = statement.executeQuery
         while (rs.next) {
           id = rs.getString("code")
         }
@@ -188,28 +196,32 @@ object Fiadmin:
     if (get_source_mnt_id_cache.contains(cache_key)) {
       id = get_source_mnt_id_cache(cache_key)
     } else {
+      val sql = """
+        SELECT 
+          b.id as code 
+        FROM 
+          biblioref_referencesource AS a, 
+          biblioref_reference AS b 
+        WHERE 
+          b.literature_type = ? AND 
+          NOT b.treatment_level LIKE 'am%' AND
+          a.reference_ptr_id=b.id AND 
+          a.title_monographic LIKE ? AND
+          LEFT(b.publication_date_normalized,4) = ?
+        ORDER BY
+          CASE 
+            WHEN b.status = -1 THEN -4
+            ELSE b.status
+          END DESC
+        LIMIT 1
+      """
+      val statement: PreparedStatement = connection.prepareStatement(sql)
+      statement.setString(1, literature)
+      statement.setString(2, "%"+title+"%")
+      statement.setString(3, year)
+
       try {
-        val statement = connection_source.createStatement
-        val rs = statement.executeQuery(s"""
-          SELECT 
-            b.id as code 
-          FROM 
-            biblioref_referencesource AS a, 
-            biblioref_reference AS b 
-          WHERE 
-            b.literature_type = '$literature' AND 
-            NOT b.treatment_level LIKE 'am%' AND
-            a.reference_ptr_id=b.id AND 
-            a.title_monographic LIKE '%$title%' AND
-            LEFT(b.publication_date_normalized,4) = '$year'
-          ORDER BY
-            CASE 
-              WHEN b.status = -1 THEN -4
-              ELSE b.status
-            END DESC
-          LIMIT 1
-          """
-        )
+        val rs = statement.executeQuery
         while (rs.next) {
           id = rs.getString("code")
         }
@@ -233,46 +245,43 @@ object Fiadmin:
     if (get_title_and_issn_cache.contains(cache_key)) {
       result = get_title_and_issn_cache(cache_key)
     } else {
-      var sql_title = ""
-      var sql_issn = ""
-      if (title_serial != "") {
-        sql_title = s"(a.shortened_title = '$title_serial' OR a.title = '$title_serial')"
-      }
-      if (issn != "") {
-        sql_issn = s"(a.issn = '$issn' OR c.issn = '$issn')"
-        if (sql_title != "") {
-          sql_issn = s" OR $sql_issn"
-        }
-      }
+      val sql = """
+        SELECT 
+          coalesce(NULLIF(a.shortened_title, ''), a.title) as 'title_serial',
+          coalesce(NULLIF(a.issn, ''), c.issn) as 'issn',
+          b.initial_date,
+          b.initial_volume,
+          b.initial_number,
+          b.final_date,
+          b.final_volume,
+          b.final_number,
+          b.indexer_cc_code
+        FROM 
+          title_title AS a,
+          title_indexrange AS b,
+          title_titlevariance AS c
+        WHERE
+          (
+            ('' = ? OR a.shortened_title = ? OR a.title = ?) OR
+            ('' = ? OR a.issn = ? OR c.issn = ?)
+          ) AND
+          c.title_id = a.id AND
+          c.type = '240' AND 
+          c.issn IS NOT NULL AND
+          b.title_id = a.id AND 
+          b.index_code_id = '17'
+        LIMIT 1
+      """
+      val statement: PreparedStatement = connection.prepareStatement(sql)
+      statement.setString(1, title_serial)
+      statement.setString(2, title_serial)
+      statement.setString(3, title_serial)
+      statement.setString(4, issn)
+      statement.setString(5, issn)
+      statement.setString(6, issn)
 
       try {
-        val statement = connection.createStatement
-        val rs = statement.executeQuery(
-          s"""
-          SELECT 
-            coalesce(NULLIF(a.shortened_title, ''), a.title) as 'title_serial',
-            coalesce(NULLIF(a.issn, ''), c.issn) as 'issn',
-            b.initial_date,
-            b.initial_volume,
-            b.initial_number,
-            b.final_date,
-            b.final_volume,
-            b.final_number,
-            b.indexer_cc_code
-          FROM 
-            title_title AS a,
-            title_indexrange AS b,
-            title_titlevariance AS c
-          WHERE
-            ($sql_title $sql_issn) AND
-            c.title_id = a.id AND
-            c.type = '240' AND 
-            c.issn IS NOT NULL AND
-            b.title_id = a.id AND 
-            b.index_code_id = '17'
-          LIMIT 1
-          """
-        )
+        val rs = statement.executeQuery
         while (rs.next) {
           val title_serial_new = rs.getString("title_serial")
           val issn_new = rs.getString("issn")
@@ -300,10 +309,7 @@ object Fiadmin:
     if (get_decs_qualifier_cache.contains(qualifier)) {
       result = get_decs_qualifier_cache(qualifier)
     } else {
-      try {
-        val statement = connection.createStatement
-        val rs = statement.executeQuery(
-          s"""
+      val sql = """
           SELECT 
             a.`term_string`,
             c.`decs_code`
@@ -319,10 +325,14 @@ object Fiadmin:
             b.`preferred_concept`= 'Y' AND 
             b.`identifier_id`= c.id AND 
             LENGTH(c.`decs_code`) = '5' AND 
-            a.`entry_version` = '$qualifier'
+            a.`entry_version` = ?
           LIMIT 1
           """
-        )
+      val statement: PreparedStatement = connection.prepareStatement(sql)
+      statement.setString(1, qualifier)
+
+      try {
+        val rs = statement.executeQuery
         while (rs.next) {
           val id = "^s" + rs.getString("decs_code")
           val decs_qualifier = rs.getString("term_string")
@@ -350,27 +360,28 @@ object Fiadmin:
     if (get_decs_descriptor_cache.contains(descriptor)) {
       id = get_decs_descriptor_cache(descriptor)
     } else {
+      val sql = """
+        SELECT 
+          c.decs_code 
+        FROM 
+          thesaurus_termlistdesc AS a, 
+          thesaurus_identifierconceptlistdesc AS b, 
+          thesaurus_identifierdesc AS c 
+        WHERE 
+          a.term_thesaurus = '1' AND 
+          a.concept_preferred_term = 'Y' AND 
+          a.record_preferred_term= 'Y' AND 
+          a.identifier_concept_id = b.id AND 
+          b.preferred_concept= 'Y' AND 
+          b.identifier_id= c.id AND 
+          a.term_string = ?
+        LIMIT 1
+      """
+      val statement: PreparedStatement = connection.prepareStatement(sql)
+      statement.setString(1, descriptor)
+
       try {
-        val statement = connection.createStatement
-        val rs = statement.executeQuery(
-          s"""
-          SELECT 
-            c.decs_code 
-          FROM 
-            thesaurus_termlistdesc AS a, 
-            thesaurus_identifierconceptlistdesc AS b, 
-            thesaurus_identifierdesc AS c 
-          WHERE 
-            a.term_thesaurus = '1' AND 
-            a.concept_preferred_term = 'Y' AND 
-            a.record_preferred_term= 'Y' AND 
-            a.identifier_concept_id = b.id AND 
-            b.preferred_concept= 'Y' AND 
-            b.identifier_id= c.id AND 
-            a.term_string = '$descriptor'
-          LIMIT 1
-          """
-        )
+        val rs = statement.executeQuery
         while (rs.next) {
           val id = "^d" + rs.getString("decs_code")
         }
@@ -396,11 +407,12 @@ object Fiadmin:
     if (is_country_code_valid_cache.contains(country_code)) {
       is_country_valid = is_country_code_valid_cache(country_code)
     } else {
+      val sql = "select id from utils_country where code=?"
+      val statement: PreparedStatement = connection.prepareStatement(sql)
+      statement.setString(1, country_code)
+
       try {
-        val statement = connection.createStatement
-        val rs = statement.executeQuery(
-          s"select id from utils_country where code='$country_code'"
-        )
+        val rs = statement.executeQuery
         while (rs.next) {
           is_country_valid = true
         }
@@ -426,11 +438,12 @@ object Fiadmin:
     if (is_cc_valid_cache.contains(cc_code)) {
       is_cc_valid = is_cc_valid_cache(cc_code)
     } else {
+      val sql = "select id from institution_institution where cc_code=?"
+      val statement: PreparedStatement = connection.prepareStatement(sql)
+      statement.setString(1, cc_code)
+
       try {
-        val statement = connection.createStatement
-        val rs = statement.executeQuery(
-          s"select id from institution_institution where cc_code='$cc_code'"
-        )
+        val rs = statement.executeQuery
         while (rs.next) {
           is_cc_valid = true
         }
@@ -456,11 +469,12 @@ object Fiadmin:
     if (is_issn_lilacs_cache.contains(issn)) {
       is_issn_lilacs = is_issn_lilacs_cache(issn)
     } else {
+      val sql = "select title_title.id from title_title, title_indexrange where title_title.id=title_indexrange.title_id and title_indexrange.index_code_id=17 and issn=?"
+      val statement: PreparedStatement = connection.prepareStatement(sql)
+      statement.setString(1, issn)
+
       try {
-        val statement = connection.createStatement
-        val rs = statement.executeQuery(
-          s"select title_title.id from title_title, title_indexrange where title_title.id=title_indexrange.title_id and title_indexrange.index_code_id=17 and issn='$issn'"
-        )
+        val rs = statement.executeQuery
         while (rs.next) {
           is_issn_lilacs = true
         }
@@ -486,11 +500,12 @@ object Fiadmin:
     if (is_journal_title_lilacs_cache.contains(journal_title)) {
       is_journal_title_lilacs = is_journal_title_lilacs_cache(journal_title)
     } else {
+      val sql = "select title_title.id from title_title, title_indexrange where title_title.id=title_indexrange.title_id and title_indexrange.index_code_id=17 and shortened_title=?"
+      val statement: PreparedStatement = connection.prepareStatement(sql)
+      statement.setString(1, journal_title)
+
       try {
-        val statement = connection.createStatement
-        val rs = statement.executeQuery(
-          s"select title_title.id from title_title, title_indexrange where title_title.id=title_indexrange.title_id and title_indexrange.index_code_id=17 and shortened_title='$journal_title'"
-        )
+        val rs = statement.executeQuery
         while (rs.next) {
           is_journal_title_lilacs = true
         }
