@@ -10,6 +10,7 @@ services:
     - "host.docker.internal:host-gateway"
     volumes:
       - ./logs:/isis-to-mongodb/logs
+      - ./export:/isis-to-mongodb/export
     links:
     - mongodb
     depends_on:
