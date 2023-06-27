@@ -30,7 +30,7 @@ class Deduplication():
 
   val project_path = Paths.get(".").toAbsolutePath
   val dedup_conf_path = s"$project_path/data/Dedup"
-  val dedup_io_path = s"$project_path/temp"
+  val dedup_io_path = s"$project_path/data/Dedup/temp"
 
   // DeDup piped input file
   val in_pipe_path = s"$dedup_io_path/in.pipe"
