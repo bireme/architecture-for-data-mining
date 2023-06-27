@@ -3,15 +3,12 @@ import transform.Base_Reference
 import mysql.Fiadmin
 import org.mongodb.scala.bson.collection.mutable.Document
 import org.bson._
-import scribe.Logger
 
 
 /**
   * Transforms data into the Biblioref.referencelocal model standard
   */
 class Reference_Local extends Base_Reference:
-  val logger = Logger("biblioref.referencelocal")
-
   fields = Document()
   new_doc = Document(
     "model" -> "biblioref.referencelocal",
