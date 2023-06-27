@@ -4,7 +4,9 @@ import mongo.MongoDB
 import org.mongodb.scala.bson.collection.mutable.Document
 import java.nio.file.{Paths, Files}
 import java.nio.charset.StandardCharsets
-import java.io.File
+import java.io.OutputStream
+import java.io.OutputStreamWriter
+import java.io.FileOutputStream
 import java.io.PrintWriter
 import org.bson.BsonString
 
@@ -21,8 +23,8 @@ object JsonExport:
   def create_file(filename : String, content : String) : Unit =
     val path = s"$export_path/$filename.json"
 
-    val jsonfile = new File(path)
-    val filewriter = new PrintWriter(jsonfile)
+    val os = new FileOutputStream(path);
+    val filewriter = new PrintWriter(new OutputStreamWriter(os, "UTF-8"))
     filewriter.write(content)
     filewriter.close()
 
