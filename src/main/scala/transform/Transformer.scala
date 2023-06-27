@@ -5,8 +5,6 @@ import transform._
 import scala.concurrent.*
 import scala.concurrent.duration.*
 import scala.io.Source
-import scribe.Logger
-import scribe.file._
 
 import ExecutionContext.Implicits.global
 
@@ -34,37 +32,9 @@ object Transformer:
   mongodb_isiscopy.set_collection("01_isiscopy")
   var docs = mongodb_isiscopy.collection.find()
 
-  init_loggers()
   init_fiadmin_nextid()
   init_mongodb_collections()
 
-  /**
-    * Init all loggers used in the transformer process
-    */
-  def init_loggers() : Unit =
-    Logger("biblioref.reference")
-    .withHandler(writer = FileWriter("logs" / "biblioref.reference.log"))
-    .replace()
-
-    Logger("biblioref.referenceanalytic")
-    .withHandler(writer = FileWriter("logs" / "biblioref.referenceanalytic.log"))
-    .replace()
-
-    Logger("biblioref.referencesource")
-    .withHandler(writer = FileWriter("logs" / "biblioref.referencesource.log"))
-    .replace()
-
-    Logger("biblioref.referencecomplement")
-    .withHandler(writer = FileWriter("logs" / "biblioref.referencecomplement.log"))
-    .replace()
-
-    Logger("biblioref.referencelocal")
-    .withHandler(writer = FileWriter("logs" / "biblioref.referencelocal.log"))
-    .replace()
-
-    Logger("main.descriptor")
-    .withHandler(writer = FileWriter("logs" / "main.descriptor.log"))
-    .replace()
 
   /**
     * Init Fi-Admin's next id based on the last ID in their search index

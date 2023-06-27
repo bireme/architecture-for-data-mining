@@ -3,14 +3,14 @@ import transform.Base_Reference
 import mysql.Fiadmin
 import org.mongodb.scala.bson.collection.mutable.Document
 import org.bson._
-import scribe.Logger
+import com.typesafe.scalalogging.Logger
 
 
 /**
   * Transforms data into the Biblioref.referencesource model standard
   */
 class Reference_Source extends Base_Reference:
-  val logger = Logger("biblioref.referencesource")
+  val logger = Logger("default")
 
   fields = Document()
   new_doc = Document(
@@ -82,7 +82,7 @@ class Reference_Source extends Base_Reference:
       } else {
         set_field_as_string("title_serial", "30")
         
-        logger.warn(s"biblioref.referencesource;$value_v2;v30;Not found in FI Admin - $value_v30")
+        logger.warn(s"30,text,$value_v30")
       }
 
       if (title_and_issn(1) != "") {
@@ -90,7 +90,7 @@ class Reference_Source extends Base_Reference:
       } else {
         set_field_as_string("issn", "35")
 
-        logger.warn(s"biblioref.referencesource;$value_v2;v35;Not found in FI Admin - $value_v35")
+        logger.warn(s"35,text,$value_v35")
       }
     }
 
@@ -108,7 +108,7 @@ class Reference_Source extends Base_Reference:
         val country_code = Fiadmin.get_country_code(value_v67)
         if (country_code == null) {
           val value_v2 = get_first_value("2")
-          logger.warn(s"biblioref.referencesource;$value_v2;v67;Not found in FI Admin - $value_v67")
+          logger.warn(s"67,text,$value_v67")
           values_v67 = values_v67.updated(i, "")
         } else {
           values_v67 = values_v67.updated(i, value_v67)
@@ -128,10 +128,12 @@ class Reference_Source extends Base_Reference:
     set_field_as_string("thesis_dissertation_academic_title", "51")
 
     val value_v51 = get_first_value("51")
-    val is_valid = Fiadmin.is_code_valid(value_v51, "thesis_dissertation_academic_title")
-    if (!is_valid) {
-      val value_v2 = get_first_value("2")
-      logger.warn(s"biblioref.referencesource;$value_v2;v51;Not found in FI Admin - $value_v51")
+    if (value_v51 != "") {
+      val is_valid = Fiadmin.is_code_valid(value_v51, "thesis_dissertation_academic_title")
+      if (!is_valid) {
+        val value_v2 = get_first_value("2")
+        logger.warn(s"51,text,$value_v51")
+      }
     }
 
   /**
@@ -154,7 +156,7 @@ class Reference_Source extends Base_Reference:
           value_doc.put("_i", BsonString(""))
           values.set(i, value_doc)
           
-          logger.warn(s"biblioref.referencesource;$value_v2;v18_i;Not found in FI Admin - $value")
+          logger.warn(s"18,_i,$value")
         }
       }
       i += 1
@@ -181,7 +183,7 @@ class Reference_Source extends Base_Reference:
           value_doc.put("_i", BsonString(""))
           values.set(i, value_doc)
           
-          logger.warn(s"biblioref.referencesource;$value_v2;v25_i;Not found in FI Admin - $value")
+          logger.warn(s"25,_i,$value")
         }
       }
       i += 1
@@ -202,13 +204,15 @@ class Reference_Source extends Base_Reference:
       var value_doc = value.asDocument()
       if (value_doc.keySet.contains("_r") == true) {
         val subfield_value = value_doc.getString("_r", BsonString("")).getValue().trim()
-        val is_valid = Fiadmin.is_code_valid(subfield_value, "degree_of_responsibility")
-        if (!is_valid) {
-          value_doc.remove("_r")
-          value_doc.put("_r", BsonString(""))
-          values.set(i, value_doc)
-          
-          logger.warn(s"biblioref.referencesource;$value_v2;v17_r;Not found in FI Admin - $value")
+        if (subfield_value != "") {
+          val is_valid = Fiadmin.is_code_valid(subfield_value, "degree_of_responsibility")
+          if (!is_valid) {
+            value_doc.remove("_r")
+            value_doc.put("_r", BsonString(""))
+            values.set(i, value_doc)
+            
+            logger.warn(s"17,_r,$subfield_value")
+          }
         }
       }
       i += 1
@@ -235,7 +239,7 @@ class Reference_Source extends Base_Reference:
           value_doc.put("_r", BsonString(""))
           values.set(i, value_doc)
           
-          logger.warn(s"biblioref.referencesource;$value_v2;v24_r;Not found in FI Admin - $value")
+          logger.warn(s"24,_r,$value")
         }
       }
       i += 1
@@ -262,7 +266,7 @@ class Reference_Source extends Base_Reference:
           if (value_v23_p != "") {
             val country_code = Fiadmin.get_country_code(value_v23_p)
             if (country_code == null) {
-              logger.warn(s"biblioref.referencesource;$value_v2;v23_p;Not found in FI Admin - $value")
+              logger.warn(s"23,_p,$value")
             } else {
               value_doc.remove("_p")
               value_doc.put("_p", BsonString(country_code))
@@ -277,7 +281,7 @@ class Reference_Source extends Base_Reference:
           if (value_r != "") {
             val is_valid = Fiadmin.is_code_valid(value_r, "degree_of_responsibility")
             if (!is_valid) {
-              logger.warn(s"biblioref.referencesource;$value_v2;v23_r;Not found in FI Admin - $value")
+              logger.warn(s"23,_r,$value")
               value_doc.remove("_r")
               value_doc.put("_r", BsonString(""))
               values_v23.set(i, value_doc)
@@ -310,7 +314,7 @@ class Reference_Source extends Base_Reference:
           if (value_v16_p != "") {
             val country_code = Fiadmin.get_country_code(value_v16_p)
             if (country_code == null) {
-              logger.warn(s"biblioref.referencesource;$value_v2;v16_p;Not found in FI Admin - $value")
+              logger.warn(s"16,_p,$value")
             } else {
               value_doc.remove("_p")
               value_doc.put("_p", BsonString(country_code))
@@ -325,7 +329,7 @@ class Reference_Source extends Base_Reference:
           if (value_r != "") {
             val is_valid = Fiadmin.is_code_valid(value_r, "degree_of_responsibility")
             if (!is_valid) {
-              logger.warn(s"biblioref.referencesource;$value_v2;v16_r;Not found in FI Admin - $value")
+              logger.warn(s"16,_r,$value_r")
               value_doc.remove("_r")
               value_doc.put("_r", BsonString(""))
               values_v16.set(i, value_doc)
@@ -344,6 +348,6 @@ class Reference_Source extends Base_Reference:
     } catch {
       case _: Throwable => {
         val value_v2 = get_first_value("2")
-        logger.warn(s"biblioref.referencesource;$value_v2;v$key;Invalid value")
+        logger.warn(s"$key,text,")
       }
     }

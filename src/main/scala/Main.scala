@@ -4,12 +4,7 @@ import dedup.Deduplication
 import exporter.JsonExport
 
 
-@main def main =
-  scribe.Logger.root
-    .clearHandlers()
-    .clearModifiers()
-    .replace()
-  
+@main def main =  
   val database = IsisDB()
   database.import_data()
 

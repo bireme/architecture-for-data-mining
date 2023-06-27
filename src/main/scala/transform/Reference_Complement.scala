@@ -3,14 +3,14 @@ import transform.Base_Reference
 import mysql.Fiadmin
 import org.mongodb.scala.bson.collection.mutable.Document
 import org.bson._
-import scribe.Logger
+import com.typesafe.scalalogging.Logger
 
 
 /**
   * Transforms data into the Biblioref.referencecomplement model standard
   */
 class Reference_Complement extends Base_Reference:
-    val logger = Logger("biblioref.referencecomplement")
+    val logger = Logger("default")
 
     fields = Document()
     new_doc = Document(
@@ -71,7 +71,7 @@ class Reference_Complement extends Base_Reference:
           val country_code = Fiadmin.get_country_code(value_v57)
           if (country_code == null) {
             val value_v2 = get_first_value("2")
-            logger.warn(s"biblioref.referencecomplement;$value_v2;v57p;Not found in FI Admin - $value_v57")
+            logger.warn(s"57,text,$value_v57")
             values_v57 = values_v57.updated(i, "")
           } else {
             values_v57 = values_v57.updated(i, value_v57)

@@ -8,14 +8,14 @@ import java.net.URLEncoder
 import java.time._
 import org.mongodb.scala.bson.collection.mutable.Document
 import org.bson._
-import scribe.Logger
+import com.typesafe.scalalogging.Logger
 
 
 /**
   * Transforms data into the Main.descriptor model standard
   */
 class Descriptor extends Base_Reference:
-  val logger = Logger("main.descriptor")
+  val logger = Logger("default")
 
   var docs = List[Document]()
 
@@ -116,8 +116,12 @@ class Descriptor extends Base_Reference:
         decs_codes += qualifier_result(0)
         decs_descriptor += "/" + qualifier_result(1)
       } else {
-        val value_v2 = get_first_value("2")
-        logger.warn(s"main.descriptor;$value_v2;DeCS;Invalid DeCS qualifier - $qualifier")
+        //val value_v2 = get_first_value("2")
+        if (primary == true) {
+          logger.warn(s"87,text,$qualifier")
+        } else {
+          logger.warn(s"88,text,$qualifier")
+        }
       }
     }
 
