@@ -101,23 +101,25 @@ class Reference_Source extends Base_Reference:
   def transform_publication_country() : Unit =
     var values_v67 = get_all_values("67")
     
-    var i = 0
-    values_v67.toArray.foreach(value =>
-      val value_v67 = value.trim()
-      if (value_v67 != "") {
-        val country_code = Fiadmin.get_country_code(value_v67)
-        if (country_code == null) {
-          val value_v2 = get_first_value("2")
-          logger.warn(s"67,text,$value_v67")
-          values_v67 = values_v67.updated(i, "")
-        } else {
-          values_v67 = values_v67.updated(i, value_v67)
+    if (values_v67.size >= 1) {
+      var i = 0
+      values_v67.toArray.foreach(value =>
+        val value_v67 = value.trim()
+        if (value_v67 != "") {
+          val country_code = Fiadmin.get_country_code(value_v67)
+          if (country_code == null) {
+            val value_v2 = get_first_value("2")
+            logger.warn(s"67,text,$value_v67")
+            values_v67 = values_v67.updated(i, "")
+          } else {
+            values_v67 = values_v67.updated(i, value_v67)
+          }
         }
-      }
-      i += 1
-    )
+        i += 1
+      )
 
-    this.fields.put("publication_country", values_v67)
+      this.fields.put("publication_country", values_v67)
+    }
 
   /**
     * Transforms the "thesis_dissertation_academic_title" field for FI-Admin.
@@ -146,22 +148,25 @@ class Reference_Source extends Base_Reference:
     val value_v2 = get_first_value("2")
     val values = get_all_values_as_document("18")
     var i = 0
-    values.forEach(value =>
-      var value_doc = value.asDocument()
-      if (value_doc.keySet.contains("_i") == true) {
-        val subfield_value = value_doc.getString("_i", BsonString("")).getValue().trim()
-        val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
-        if (!is_valid) {
-          value_doc.remove("_i")
-          value_doc.put("_i", BsonString(""))
-          values.set(i, value_doc)
-          
-          logger.warn(s"18,_i,$value")
+
+    if (values.size >= 1) {
+      values.forEach(value =>
+        var value_doc = value.asDocument()
+        if (value_doc.keySet.contains("_i") == true) {
+          val subfield_value = value_doc.getString("_i", BsonString("")).getValue().trim()
+          val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
+          if (!is_valid) {
+            value_doc.remove("_i")
+            value_doc.put("_i", BsonString(""))
+            values.set(i, value_doc)
+            
+            logger.warn(s"18,_i,$value")
+          }
         }
-      }
-      i += 1
-    )
-    this.fields.put("title_monographic", values)
+        i += 1
+      )
+      this.fields.put("title_monographic", values)
+    }
 
   /**
     * Transforms the "title_collection" field for FI-Admin.
@@ -173,22 +178,25 @@ class Reference_Source extends Base_Reference:
     val value_v2 = get_first_value("2")
     val values = get_all_values_as_document("25")
     var i = 0
-    values.forEach(value =>
-      var value_doc = value.asDocument()
-      if (value_doc.keySet.contains("_i") == true) {
-        val subfield_value = value_doc.getString("_i", BsonString("")).getValue().trim()
-        val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
-        if (!is_valid) {
-          value_doc.remove("_i")
-          value_doc.put("_i", BsonString(""))
-          values.set(i, value_doc)
-          
-          logger.warn(s"25,_i,$value")
+
+    if (values.size >= 1) {
+      values.forEach(value =>
+        var value_doc = value.asDocument()
+        if (value_doc.keySet.contains("_i") == true) {
+          val subfield_value = value_doc.getString("_i", BsonString("")).getValue().trim()
+          val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
+          if (!is_valid) {
+            value_doc.remove("_i")
+            value_doc.put("_i", BsonString(""))
+            values.set(i, value_doc)
+            
+            logger.warn(s"25,_i,$value")
+          }
         }
-      }
-      i += 1
-    )
-    this.fields.put("title_collection", values)
+        i += 1
+      )
+      this.fields.put("title_collection", values)
+    }
 
   /**
     * Transforms the "corporate_author_monographic" field for FI-Admin.
@@ -200,24 +208,27 @@ class Reference_Source extends Base_Reference:
     val value_v2 = get_first_value("2")
     val values = get_all_values_as_document("17")
     var i = 0
-    values.forEach(value =>
-      var value_doc = value.asDocument()
-      if (value_doc.keySet.contains("_r") == true) {
-        val subfield_value = value_doc.getString("_r", BsonString("")).getValue().trim()
-        if (subfield_value != "") {
-          val is_valid = Fiadmin.is_code_valid(subfield_value, "degree_of_responsibility")
-          if (!is_valid) {
-            value_doc.remove("_r")
-            value_doc.put("_r", BsonString(""))
-            values.set(i, value_doc)
-            
-            logger.warn(s"17,_r,$subfield_value")
+
+    if (values.size >= 1) {
+      values.forEach(value =>
+        var value_doc = value.asDocument()
+        if (value_doc.keySet.contains("_r") == true) {
+          val subfield_value = value_doc.getString("_r", BsonString("")).getValue().trim()
+          if (subfield_value != "") {
+            val is_valid = Fiadmin.is_code_valid(subfield_value, "degree_of_responsibility")
+            if (!is_valid) {
+              value_doc.remove("_r")
+              value_doc.put("_r", BsonString(""))
+              values.set(i, value_doc)
+              
+              logger.warn(s"17,_r,$subfield_value")
+            }
           }
         }
-      }
-      i += 1
-    )
-    this.fields.put("corporate_author_monographic", values)
+        i += 1
+      )
+      this.fields.put("corporate_author_monographic", values)
+    }
 
   /**
     * Transforms the "corporate_author_collection" field for FI-Admin.
@@ -229,22 +240,25 @@ class Reference_Source extends Base_Reference:
     val value_v2 = get_first_value("2")
     val values = get_all_values_as_document("24")
     var i = 0
-    values.forEach(value =>
-      var value_doc = value.asDocument()
-      if (value_doc.keySet.contains("_r") == true) {
-        val subfield_value = value_doc.getString("_r", BsonString("")).getValue().trim()
-        val is_valid = Fiadmin.is_code_valid(subfield_value, "degree_of_responsibility")
-        if (!is_valid) {
-          value_doc.remove("_r")
-          value_doc.put("_r", BsonString(""))
-          values.set(i, value_doc)
-          
-          logger.warn(s"24,_r,$value")
+
+    if (values.size >= 1) {
+      values.forEach(value =>
+        var value_doc = value.asDocument()
+        if (value_doc.keySet.contains("_r") == true) {
+          val subfield_value = value_doc.getString("_r", BsonString("")).getValue().trim()
+          val is_valid = Fiadmin.is_code_valid(subfield_value, "degree_of_responsibility")
+          if (!is_valid) {
+            value_doc.remove("_r")
+            value_doc.put("_r", BsonString(""))
+            values.set(i, value_doc)
+            
+            logger.warn(s"24,_r,$value")
+          }
         }
-      }
-      i += 1
-    )
-    this.fields.put("corporate_author_collection", values)
+        i += 1
+      )
+      this.fields.put("corporate_author_collection", values)
+    }
 
   /**
     * Transforms the "individual_author_collection" field for FI-Admin.

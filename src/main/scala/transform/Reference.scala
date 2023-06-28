@@ -137,15 +137,20 @@ class Reference extends Base_Reference:
       var values = get_all_values(isis_field)
       val value_v2 = get_first_value("2")
       var i = 0
-      values.foreach(value =>
-        val is_valid = Fiadmin.is_code_valid(value, fiadmin_field)
-        if (!is_valid) {
-          values = values.updated(i, "")
-          logger.warn(s"$isis_field,text,$value")
-        }
-        i += 1
-      )
-      this.fields.put(fiadmin_field, values)
+
+      if (values.size >= 1) {
+        values.foreach(value =>
+          if (value.trim() != "") {
+            val is_valid = Fiadmin.is_code_valid(value, fiadmin_field)
+            if (!is_valid) {
+              values = values.updated(i, "")
+              logger.warn(s"$isis_field,text,$value")
+            }
+            i += 1
+          }
+        )
+        this.fields.put(fiadmin_field, values)
+      }
 
     /**
       * Transforms the "descriptive_information" field for FI-Admin.
@@ -175,24 +180,27 @@ class Reference extends Base_Reference:
       val value_v2 = get_first_value("2")
       val values = get_all_values_as_document("83")
       var i = 0
-      values.forEach(value =>
-        var value_doc = value.asDocument()
-        if (value_doc.keySet.contains("_i") == true) {
-          val subfield_value = value_doc.getString("_i", BsonString("")).getValue().trim()
-          if (subfield_value != "") {
-            val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
-            if (!is_valid) {
-              value_doc.remove("_i")
-              value_doc.put("_i", BsonString(""))
-              values.set(i, value_doc)
-              
-              logger.warn(s"83,_i,$subfield_value")
+
+      if (values.size >= 1) {
+        values.forEach(value =>
+          var value_doc = value.asDocument()
+          if (value_doc.keySet.contains("_i") == true) {
+            val subfield_value = value_doc.getString("_i", BsonString("")).getValue().trim()
+            if (subfield_value != "") {
+              val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
+              if (!is_valid) {
+                value_doc.remove("_i")
+                value_doc.put("_i", BsonString(""))
+                values.set(i, value_doc)
+                
+                logger.warn(s"83,_i,$subfield_value")
+              }
             }
           }
-        }
-        i += 1
-      )
-      this.fields.put("abstract", values)
+          i += 1
+        )
+        this.fields.put("abstract", values)
+      }
 
     /**
       * Transforms the "author_keyword" field for FI-Admin.
@@ -204,24 +212,27 @@ class Reference extends Base_Reference:
       val value_v2 = get_first_value("2")
       val values = get_all_values_as_document("85")
       var i = 0
-      values.forEach(value =>
-        var value_doc = value.asDocument()
-        if (value_doc.keySet.contains("_i") == true) {
-          val subfield_value = value_doc.getString("_i", BsonString("")).getValue().trim()
-          if (subfield_value != ""){
-            val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
-            if (!is_valid) {
-              value_doc.remove("_i")
-              value_doc.put("_i", BsonString(""))
-              values.set(i, value_doc)
-              
-              logger.warn(s"85,_i,$subfield_value")
+
+      if (values.size >= 1) {
+        values.forEach(value =>
+          var value_doc = value.asDocument()
+          if (value_doc.keySet.contains("_i") == true) {
+            val subfield_value = value_doc.getString("_i", BsonString("")).getValue().trim()
+            if (subfield_value != ""){
+              val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
+              if (!is_valid) {
+                value_doc.remove("_i")
+                value_doc.put("_i", BsonString(""))
+                values.set(i, value_doc)
+                
+                logger.warn(s"85,_i,$subfield_value")
+              }
             }
           }
-        }
-        i += 1
-      )
-      this.fields.put("author_keyword", values)
+          i += 1
+        )
+        this.fields.put("author_keyword", values)
+      }
 
     /**
       * Transforms the "electronic_address" field for FI-Admin.
@@ -295,22 +306,28 @@ class Reference extends Base_Reference:
       val value_v2 = get_first_value("2")
       val values = get_all_values_as_document("76")
       var i = 0
-      values.forEach(value =>
-        var value_doc = value.asDocument()
-        if (value_doc.keySet.contains("text") == true) {
-          val subfield_value = value_doc.getString("text", BsonString("")).getValue().trim()
-          val is_valid = Fiadmin.is_code_valid(subfield_value, "check_tags")
-          if (!is_valid) {
-            value_doc.remove("text")
-            value_doc.put("text", BsonString(""))
-            values.set(i, value_doc)
-            
-            logger.warn(s"76,text,$subfield_value")
+
+      if (values.size >= 1) {
+        values.forEach(value =>
+          var value_doc = value.asDocument()
+          if (value_doc.keySet.contains("text") == true) {
+            val subfield_value = value_doc.getString("text", BsonString("")).getValue().trim()
+
+            if (subfield_value != "") {
+              val is_valid = Fiadmin.is_code_valid(subfield_value, "check_tags")
+              if (!is_valid) {
+                value_doc.remove("text")
+                value_doc.put("text", BsonString(""))
+                values.set(i, value_doc)
+                
+                logger.warn(s"76,text,$subfield_value")
+              }
+            }
           }
-        }
-        i += 1
-      )
-      this.fields.put("check_tags", values)
+          i += 1
+        )
+        this.fields.put("check_tags", values)
+      }
     
     /**
       * Transforms the "publication_date_normalized" field for FI-Admin.
@@ -322,18 +339,21 @@ class Reference extends Base_Reference:
 
       val values_v65 = get_all_values("65")
       val value_v2 = get_first_value("2")
-      values_v65.foreach(value_v65 =>
-        if (value_v65.length == 8) {
-          val format = new SimpleDateFormat("yyyyMMdd")
-          try {
-            format.parse(value_v65)
-          } catch  {
-            case e: ParseException => logger.warn(s"biblioref.reference;$value_v2;v65;Invalid date - $value_v65")
+
+      if (values_v65.size >= 1) {
+        values_v65.foreach(value_v65 =>
+          if (value_v65.length == 8) {
+            val format = new SimpleDateFormat("yyyyMMdd")
+            try {
+              format.parse(value_v65)
+            } catch  {
+              case e: ParseException => logger.warn(s"biblioref.reference;$value_v2;v65;Invalid date - $value_v65")
+            }
+          } else {
+            logger.warn(s"65,text,$value_v65")
           }
-        } else {
-          logger.warn(s"65,text,$value_v65")
-        }
-      )
+        )
+      }
 
     /**
       * Transforms the "cooperative_center_code" field for FI-Admin.

@@ -46,7 +46,31 @@ object JsonExport:
           }
         }
 
-        create_file(id, doc.toJson)
+        val reference_json = doc.get("reference").get.asDocument.toJson
+        var references = "[" + reference_json
+
+        if (doc.keySet.contains("referenceanalytic")) {
+          references += ", " + doc.get("referenceanalytic").get.asDocument.toJson
+        }
+        if (doc.keySet.contains("referencesource")) {
+          references += ", " + doc.get("referencesource").get.asDocument.toJson
+        }
+        if (doc.keySet.contains("referencecomplement")) {
+          references += ", " + doc.get("referencecomplement").get.asDocument.toJson
+        }
+        if (doc.keySet.contains("referencelocal")) {
+          references += ", " + doc.get("referencelocal").get.asDocument.toJson
+        }
+        if (doc.keySet.contains("descriptor")) {
+          val descriptors = doc.get("descriptor").get.asArray
+          descriptors.forEach(value =>
+            references += ", " + value.asDocument.toJson
+          )
+        }
+
+        references += "]"
+
+        create_file(id, references)
       },
       (e: Throwable) => {println(s"Error: $e")},
       () => {processing = false}

@@ -99,15 +99,18 @@ class Reference_Analytic extends Base_Reference:
     var values = get_all_values("700")
     val value_v2 = get_first_value("2")
     var i = 0
-    values.foreach(value =>
-      val is_valid = Fiadmin.is_code_valid(value, "clinical_trial_database")
-      if (!is_valid) {
-        values = values.updated(i, "")
-        logger.warn(s"700,text,$value")
-      }
-      i += 1
-    )
-    this.fields.put("clinical_trial_registry_name", values)
+
+    if (values.size >= 1) {
+      values.foreach(value =>
+        val is_valid = Fiadmin.is_code_valid(value, "clinical_trial_database")
+        if (!is_valid) {
+          values = values.updated(i, "")
+          logger.warn(s"700,text,$value")
+        }
+        i += 1
+      )
+      this.fields.put("clinical_trial_registry_name", values)
+    }
 
   /**
     * Transforms the "title" field for FI-Admin.
@@ -119,22 +122,25 @@ class Reference_Analytic extends Base_Reference:
     val value_v2 = get_first_value("2")
     val values = get_all_values_as_document("12")
     var i = 0
-    values.forEach(value =>
-      var value_doc = value.asDocument()
-      if (value_doc.keySet.contains("_i") == true) {
-        val subfield_value = value_doc.getString("_i", BsonString("")).getValue().trim()
-        val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
-        if (!is_valid) {
-          value_doc.remove("_i")
-          value_doc.put("_i", BsonString(""))
-          values.set(i, value_doc)
-          
-          logger.warn(s"12,_i,$value")
+
+    if (values.size >= 1) {
+      values.forEach(value =>
+        var value_doc = value.asDocument()
+        if (value_doc.keySet.contains("_i") == true) {
+          val subfield_value = value_doc.getString("_i", BsonString("")).getValue().trim()
+          val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
+          if (!is_valid) {
+            value_doc.remove("_i")
+            value_doc.put("_i", BsonString(""))
+            values.set(i, value_doc)
+            
+            logger.warn(s"12,_i,$value")
+          }
         }
-      }
-      i += 1
-    )
-    this.fields.put("title", values)
+        i += 1
+      )
+      this.fields.put("title", values)
+    }
   
   /**
     * Transforms the "corporate_author" field for FI-Admin.
@@ -146,22 +152,25 @@ class Reference_Analytic extends Base_Reference:
     val value_v2 = get_first_value("2")
     val values = get_all_values_as_document("11")
     var i = 0
-    values.forEach(value =>
-      var value_doc = value.asDocument()
-      if (value_doc.keySet.contains("_r") == true) {
-        val subfield_value = value_doc.getString("_r", BsonString("")).getValue().trim()
-        val is_valid = Fiadmin.is_code_valid(subfield_value, "degree_of_responsibility")
-        if (!is_valid) {
-          value_doc.remove("_r")
-          value_doc.put("_r", BsonString(""))
-          values.set(i, value_doc)
-          
-          logger.warn(s"11,_r,$value")
+
+    if (values.size >= 1) {
+      values.forEach(value =>
+        var value_doc = value.asDocument()
+        if (value_doc.keySet.contains("_r") == true) {
+          val subfield_value = value_doc.getString("_r", BsonString("")).getValue().trim()
+          val is_valid = Fiadmin.is_code_valid(subfield_value, "degree_of_responsibility")
+          if (!is_valid) {
+            value_doc.remove("_r")
+            value_doc.put("_r", BsonString(""))
+            values.set(i, value_doc)
+            
+            logger.warn(s"11,_r,$value")
+          }
         }
-      }
-      i += 1
-    )
-    this.fields.put("corporate_author", values)
+        i += 1
+      )
+      this.fields.put("corporate_author", values)
+    }
 
   /**
     * Transforms the "individual_author" field for FI-Admin.

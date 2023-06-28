@@ -126,7 +126,7 @@ class Descriptor extends Base_Reference:
     }
 
     var fields = Document(
-      "status" -> Settings.getConf("STATUS").toInt,
+      "status" -> 1,
       "created_by" -> Settings.getConf("CREATED_BY").toInt,
       "content_type" -> 43,
       "primary" -> primary,

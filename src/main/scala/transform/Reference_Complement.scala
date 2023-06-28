@@ -64,20 +64,22 @@ class Reference_Complement extends Base_Reference:
     def transform_conference_country() : Unit =
       var values_v57 = get_all_values("57")
       
-      var i = 0;
-      values_v57.toArray.foreach(value =>
-        val value_v57 = value.trim()
-        if (value_v57 != "") {
-          val country_code = Fiadmin.get_country_code(value_v57)
-          if (country_code == null) {
-            val value_v2 = get_first_value("2")
-            logger.warn(s"57,text,$value_v57")
-            values_v57 = values_v57.updated(i, "")
-          } else {
-            values_v57 = values_v57.updated(i, value_v57)
+      if (values_v57.size >= 1) {
+        var i = 0;
+        values_v57.toArray.foreach(value =>
+          val value_v57 = value.trim()
+          if (value_v57 != "") {
+            val country_code = Fiadmin.get_country_code(value_v57)
+            if (country_code == null) {
+              val value_v2 = get_first_value("2")
+              logger.warn(s"57,text,$value_v57")
+              values_v57 = values_v57.updated(i, "")
+            } else {
+              values_v57 = values_v57.updated(i, value_v57)
+            }
           }
-        }
-        i += 1
-      )
+          i += 1
+        )
 
-      this.fields.put("conference_country", values_v57)
+        this.fields.put("conference_country", values_v57)
+      }

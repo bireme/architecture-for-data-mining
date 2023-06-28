@@ -10,7 +10,6 @@ import scala.sys.process._
 import scala.util.matching.Regex
 import org.mongodb.scala._
 import org.mongodb.scala.model._
-import org.mongodb.scala.bson.BsonObjectId
 import org.mongodb.scala.bson._
 import org.mongodb.scala.bson.collection.mutable.Document
 import scala.concurrent.*
@@ -141,7 +140,7 @@ class IsisDB(var iso_path: String = ""):
       var records: Array[String] = mx_output.split("(?ms)^mfn= ", 0)
       records = records.drop(1) // removing MFN line 
       for record <- records do
-        var doc = Document("_id" -> new ObjectId())
+        var doc = Document()
 
         for line <- field_pattern.findAllMatchIn(record.trim()) do
           val field_number = line.group(1)
