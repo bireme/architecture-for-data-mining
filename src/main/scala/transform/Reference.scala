@@ -7,6 +7,7 @@ import config.Settings
 import java.time._
 import java.text.SimpleDateFormat
 import java.text.ParseException
+import java.time.format.DateTimeFormatter
 import org.mongodb.scala.bson.collection.mutable.Document
 import org.bson.BsonString
 import org.bson.BsonDocument
@@ -101,9 +102,10 @@ class Reference extends Base_Reference:
       * timezone
       */
     def set_created_updated_datetime() : Unit =
-      val tz_datetime = ZonedDateTime.now().toString()
-      this.fields.put("created_time", tz_datetime)
-      this.fields.put("updated_time", tz_datetime)
+      val tz_datetime = ZonedDateTime.now()
+      val formatted_datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ssZZZZZ").format(tz_datetime)
+      this.fields.put("created_time", formatted_datetime)
+      this.fields.put("updated_time", formatted_datetime)
 
     /**
       * Transforms the "literature_type" and "treatment_level" fields for FI-Admin.
@@ -199,7 +201,7 @@ class Reference extends Base_Reference:
           }
           i += 1
         )
-        this.fields.put("abstract", values)
+        this.fields.put("abstract", "["+values.toArray.mkString(", ")+"]")
       }
 
     /**
@@ -231,7 +233,7 @@ class Reference extends Base_Reference:
           }
           i += 1
         )
-        this.fields.put("author_keyword", values)
+        this.fields.put("author_keyword", "["+values.toArray.mkString(", ")+"]")
       }
 
     /**
@@ -294,7 +296,7 @@ class Reference extends Base_Reference:
           i += 1
         )
         
-        this.fields.put("electronic_address", values_v8)
+        this.fields.put("electronic_address", "["+values_v8.toArray.mkString(", ")+"]")
       }
 
     /**
@@ -326,7 +328,7 @@ class Reference extends Base_Reference:
           }
           i += 1
         )
-        this.fields.put("check_tags", values)
+        this.fields.put("check_tags", "["+values.toArray.mkString(", ")+"]")
       }
     
     /**

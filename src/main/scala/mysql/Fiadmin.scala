@@ -383,7 +383,7 @@ object Fiadmin:
       try {
         val rs = statement.executeQuery
         while (rs.next) {
-          val id = "^d" + rs.getString("decs_code")
+          id = "^d" + rs.getString("decs_code")
         }
         get_decs_descriptor_cache += descriptor -> id
       } catch {

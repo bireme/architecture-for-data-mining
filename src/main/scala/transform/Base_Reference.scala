@@ -40,7 +40,7 @@ class Base_Reference():
   def set_field_as_document(name: String, key: String) : Unit =
     if (this.doc.keySet.contains(key) == true) {
       if (this.doc.get(key).get.isArray()) {
-        this.fields.put(name, this.doc.get(key).get)
+        this.fields.put(name, "["+this.doc.get(key).get.asArray.toArray.mkString(", ")+"]")
       } else {
         this.fields.put(name, this.doc.get(key).get.asDocument())
       }

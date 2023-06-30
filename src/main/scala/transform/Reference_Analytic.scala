@@ -87,7 +87,7 @@ class Reference_Analytic extends Base_Reference:
     }
 
     if (source_id != null) {
-      this.fields.put("source", source_id)
+      this.fields.put("source", source_id.toInt)
     }
 
   /**
@@ -109,7 +109,7 @@ class Reference_Analytic extends Base_Reference:
         }
         i += 1
       )
-      this.fields.put("clinical_trial_registry_name", values)
+      this.fields.put("clinical_trial_registry_name", "["+values.toArray.mkString(", ")+"]")
     }
 
   /**
@@ -139,7 +139,7 @@ class Reference_Analytic extends Base_Reference:
         }
         i += 1
       )
-      this.fields.put("title", values)
+      this.fields.put("title", "["+values.toArray.mkString(", ")+"]")
     }
   
   /**
@@ -169,7 +169,7 @@ class Reference_Analytic extends Base_Reference:
         }
         i += 1
       )
-      this.fields.put("corporate_author", values)
+      this.fields.put("corporate_author", "["+values.toArray.mkString(", ")+"]")
     }
 
   /**
@@ -219,5 +219,5 @@ class Reference_Analytic extends Base_Reference:
         i += 1
       )
       
-      this.fields.put("individual_author", values_v10)
+      this.fields.put("individual_author", "["+values_v10.toArray.mkString(", ")+"]")
     }

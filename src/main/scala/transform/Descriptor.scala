@@ -6,6 +6,7 @@ import scala.io.Source
 import scala.util.matching.Regex
 import java.net.URLEncoder
 import java.time._
+import java.time.format.DateTimeFormatter
 import org.mongodb.scala.bson.collection.mutable.Document
 import org.bson._
 import com.typesafe.scalalogging.Logger
@@ -102,9 +103,10 @@ class Descriptor extends Base_Reference:
     * timezone
     */
   def set_created_updated_datetime(fields: Document): Document =
-    val tz_datetime = ZonedDateTime.now().toString()
-    fields.put("created_time", tz_datetime)
-    fields.put("updated_time", tz_datetime)
+    val tz_datetime = ZonedDateTime.now()
+    val formatted_datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ssZZZZZ").format(tz_datetime)
+    fields.put("created_time", formatted_datetime)
+    fields.put("updated_time", formatted_datetime)
     return fields
 
   def transform_decs_keyword(pk: Int, descriptor: String, qualifier: String, primary: Boolean): Document =
@@ -116,7 +118,6 @@ class Descriptor extends Base_Reference:
         decs_codes += qualifier_result(0)
         decs_descriptor += "/" + qualifier_result(1)
       } else {
-        //val value_v2 = get_first_value("2")
         if (primary == true) {
           logger.warn(s"87,text,$qualifier")
         } else {
@@ -125,10 +126,16 @@ class Descriptor extends Base_Reference:
       }
     }
 
+    val value_v6 = get_first_value("6")
+    var content_type = 43
+    if (value_v6.contains("a")) {
+      content_type = 44
+    }
+
     var fields = Document(
       "status" -> 1,
       "created_by" -> Settings.getConf("CREATED_BY").toInt,
-      "content_type" -> 43,
+      "content_type" -> content_type,
       "primary" -> primary,
       "text" -> decs_descriptor,
       "code" -> decs_codes
