@@ -104,7 +104,7 @@ class Descriptor extends Base_Reference:
     */
   def set_created_updated_datetime(fields: Document): Document =
     val tz_datetime = ZonedDateTime.now()
-    val formatted_datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ssZZZZZ").format(tz_datetime)
+    val formatted_datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZZZZZ").format(tz_datetime)
     fields.put("created_time", formatted_datetime)
     fields.put("updated_time", formatted_datetime)
     return fields

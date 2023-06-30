@@ -103,7 +103,7 @@ class Reference extends Base_Reference:
       */
     def set_created_updated_datetime() : Unit =
       val tz_datetime = ZonedDateTime.now()
-      val formatted_datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ssZZZZZ").format(tz_datetime)
+      val formatted_datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZZZZZ").format(tz_datetime)
       this.fields.put("created_time", formatted_datetime)
       this.fields.put("updated_time", formatted_datetime)
 
