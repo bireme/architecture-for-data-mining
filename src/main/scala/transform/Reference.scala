@@ -340,7 +340,7 @@ class Reference extends Base_Reference:
       this.set_field_as_string("publication_date_normalized", "65")
 
       val values_v65 = get_all_values("65")
-      val value_v2 = get_first_value("2")
+      var i = 0
 
       if (values_v65.size >= 1) {
         values_v65.foreach(value_v65 =>
@@ -349,11 +349,15 @@ class Reference extends Base_Reference:
             try {
               format.parse(value_v65)
             } catch  {
-              case e: ParseException => logger.warn(s"biblioref.reference;$value_v2;v65;Invalid date - $value_v65")
+              case e: ParseException => logger.warn(s"65,text,$value_v65")
             }
+          } else if (value_v65.length < 8) {
+            val padded_v65 = value_v65.padTo(8, '0')
+            values_v65.updated(i, padded_v65)
           } else {
             logger.warn(s"65,text,$value_v65")
           }
+          i += 1
         )
       }
 
