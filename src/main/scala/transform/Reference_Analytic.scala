@@ -105,7 +105,7 @@ class Reference_Analytic extends Base_Reference:
         val is_valid = Fiadmin.is_code_valid(value, "clinical_trial_database")
         if (!is_valid) {
           values = values.updated(i, "")
-          logger.warn(s"700,text,$value")
+          logger.warn(s"700|text|$value")
         }
         i += 1
       )
@@ -131,10 +131,10 @@ class Reference_Analytic extends Base_Reference:
           val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
           if (!is_valid) {
             value_doc.remove("_i")
-            value_doc.put("_i", BsonString(""))
+            //value_doc.put("_i", BsonString(""))
             values.set(i, value_doc)
             
-            logger.warn(s"12,_i,$value")
+            logger.warn(s"12|_i|$subfield_value")
           }
         }
         i += 1
@@ -161,10 +161,10 @@ class Reference_Analytic extends Base_Reference:
           val is_valid = Fiadmin.is_code_valid(subfield_value, "degree_of_responsibility")
           if (!is_valid) {
             value_doc.remove("_r")
-            value_doc.put("_r", BsonString(""))
+            //value_doc.put("_r", BsonString(""))
             values.set(i, value_doc)
             
-            logger.warn(s"11,_r,$value")
+            logger.warn(s"11|_r|$value")
           }
         }
         i += 1
@@ -192,9 +192,9 @@ class Reference_Analytic extends Base_Reference:
           if (value_v10_p != "") {
             val country_code = Fiadmin.get_country_code(value_v10_p)
             if (country_code == null) {
-              logger.warn(s"10,_p,$value_v10_p")
+              logger.warn(s"10|_p|$value_v10_p")
               value_doc.remove("_p")
-              value_doc.put("_p", BsonString(""))
+              //value_doc.put("_p", BsonString(""))
             } else {
               value_doc.remove("_p")
               value_doc.put("_p", BsonString(country_code))
@@ -209,9 +209,9 @@ class Reference_Analytic extends Base_Reference:
           if (value_v10_r != "") {
             val is_valid = Fiadmin.is_code_valid(value_v10_r, "degree_of_responsibility")
             if (!is_valid) {
-              logger.warn(s"10,_r,$value_v10_r")
+              logger.warn(s"10|_r|$value_v10_r")
               value_doc.remove("_r")
-              value_doc.put("_r", BsonString(""))
+              //value_doc.put("_r", BsonString(""))
               values_v10.set(i, value_doc)
             }
           }

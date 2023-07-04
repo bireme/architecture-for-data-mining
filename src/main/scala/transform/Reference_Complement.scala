@@ -72,7 +72,7 @@ class Reference_Complement extends Base_Reference:
             val country_code = Fiadmin.get_country_code(value_v57)
             if (country_code == null) {
               val value_v2 = get_first_value("2")
-              logger.warn(s"57,text,$value_v57")
+              logger.warn(s"57|text|$value_v57")
               values_v57 = values_v57.updated(i, "")
             } else {
               values_v57 = values_v57.updated(i, value_v57)
