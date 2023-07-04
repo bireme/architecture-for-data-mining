@@ -173,16 +173,20 @@ class IsisDB(var iso_path: String = ""):
     * given a list of CSV files
     */
   def batch_replace(mongodb : MongoDB): Unit =
+    implicit object MyFormat extends DefaultCSVFormat {
+      override val delimiter = '|'
+    }
+
     val csvs_replace_path: List[String] = getListOfFiles(replace_csv_path)
     for csv_replace_path <- csvs_replace_path do
       println(csv_replace_path)
       val reader = CSVReader.open(new File(csv_replace_path))
 
       reader.foreach(row => 
-        val field = row(0)
-        val subfield = row(1)
-        val old_value = row(2)
-        val new_value = row(3)
+        val field = row(0).trim
+        val subfield = row(1).trim
+        val old_value = row(2).trim
+        val new_value = row(3).trim
 
         val commands = List(
           // Updates non-repetitive fields

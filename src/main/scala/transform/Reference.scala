@@ -124,8 +124,8 @@ class Reference extends Base_Reference:
         this.set_field_as_string("literature_type", "5")
         this.set_field_as_string("treatment_level", "6")
       } else {
-        logger.warn(s"5,text,$value_v5")
-        logger.warn(s"6,text,$value_v6")
+        logger.warn(s"5|text|$value_v5")
+        logger.warn(s"6|text|$value_v6")
       }
 
       return is_valid
@@ -146,7 +146,7 @@ class Reference extends Base_Reference:
             val is_valid = Fiadmin.is_code_valid(value, fiadmin_field)
             if (!is_valid) {
               values = values.updated(i, "")
-              logger.warn(s"$isis_field,text,$value")
+              logger.warn(s"$isis_field|text|$value")
             }
             i += 1
           }
@@ -168,7 +168,7 @@ class Reference extends Base_Reference:
       values_v38_b.foreach(value_v38_b =>
         val is_valid = DescriptiveInfo.is_descriptive_code_valid(value_v38_b)
         if (!is_valid) {
-          logger.warn(s"38,_b,$value_v38_b")
+          logger.warn(s"38|_b|$value_v38_b")
         }
       )
 
@@ -192,10 +192,10 @@ class Reference extends Base_Reference:
               val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
               if (!is_valid) {
                 value_doc.remove("_i")
-                value_doc.put("_i", BsonString(""))
+                //value_doc.put("_i", BsonString(""))
                 values.set(i, value_doc)
                 
-                logger.warn(s"83,_i,$subfield_value")
+                logger.warn(s"83|_i|$subfield_value")
               }
             }
           }
@@ -224,10 +224,10 @@ class Reference extends Base_Reference:
               val is_valid = Fiadmin.is_code_valid(subfield_value, "text_language")
               if (!is_valid) {
                 value_doc.remove("_i")
-                value_doc.put("_i", BsonString(""))
+                //value_doc.put("_i", BsonString(""))
                 values.set(i, value_doc)
                 
-                logger.warn(s"85,_i,$subfield_value")
+                logger.warn(s"85|_i|$subfield_value")
               }
             }
           }
@@ -257,9 +257,9 @@ class Reference extends Base_Reference:
             if (value_i != "") {
               val is_valid = Fiadmin.is_code_valid(value_i, "text_language")
               if (!is_valid) {
-                logger.warn(s"8,_i,$value_i")
+                logger.warn(s"8|_i|$value_i")
                 value_doc.remove("_i")
-                value_doc.put("_i", BsonString(""))
+                //value_doc.put("_i", BsonString(""))
                 values_v8.set(i, value_doc)
               }
             }
@@ -271,9 +271,9 @@ class Reference extends Base_Reference:
             if (value_q != "") {
               val is_valid = Fiadmin.is_code_valid(value_q, "electronic_address_q")
               if (!is_valid) {
-                logger.warn(s"8,_q,$value_q")
+                logger.warn(s"8|_q|$value_q")
                 value_doc.remove("_q")
-                value_doc.put("_q", BsonString(""))
+                //value_doc.put("_q", BsonString(""))
                 values_v8.set(i, value_doc)
               }
             }
@@ -285,9 +285,9 @@ class Reference extends Base_Reference:
             if (value_y != "") {
               val is_valid = Fiadmin.is_code_valid(value_y, "electronic_address_y")
               if (!is_valid) {
-                logger.warn(s"8,_y,$value_y")
+                logger.warn(s"8|_y|$value_y")
                 value_doc.remove("_y")
-                value_doc.put("_y", BsonString(""))
+                //value_doc.put("_y", BsonString(""))
                 values_v8.set(i, value_doc)
               }
             }
@@ -319,10 +319,10 @@ class Reference extends Base_Reference:
               val is_valid = Fiadmin.is_code_valid(subfield_value, "check_tags")
               if (!is_valid) {
                 value_doc.remove("text")
-                value_doc.put("text", BsonString(""))
+                //value_doc.put("text", BsonString(""))
                 values.set(i, value_doc)
                 
-                logger.warn(s"76,text,$subfield_value")
+                logger.warn(s"76|text|$subfield_value")
               }
             }
           }
@@ -349,13 +349,13 @@ class Reference extends Base_Reference:
             try {
               format.parse(value_v65)
             } catch  {
-              case e: ParseException => logger.warn(s"65,text,$value_v65")
+              case e: ParseException => logger.warn(s"65|text|$value_v65")
             }
           } else if (value_v65.length < 8) {
             val padded_v65 = value_v65.padTo(8, '0')
             values_v65.updated(i, padded_v65)
           } else {
-            logger.warn(s"65,text,$value_v65")
+            logger.warn(s"65|text|$value_v65")
           }
           i += 1
         )
@@ -373,7 +373,7 @@ class Reference extends Base_Reference:
       val is_v1_valid = Fiadmin.is_cc_valid(value_v1)
       if (!is_v1_valid) {
         val value_v2 = get_first_value("2")
-        logger.warn(s"1,text,$value_v1")
+        logger.warn(s"1|text|$value_v1")
       }
 
     /**
@@ -386,7 +386,7 @@ class Reference extends Base_Reference:
 
       val value_v2 = get_first_value("2")
       if (value_v2 == "") {
-        logger.warn(s"2,text,")
+        logger.warn(s"2|text|")
       }
 
       val interop_source = Settings.getConf("INTEROPERABILITY_SOURCE")

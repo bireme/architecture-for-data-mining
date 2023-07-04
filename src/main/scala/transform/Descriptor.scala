@@ -119,9 +119,9 @@ class Descriptor extends Base_Reference:
         decs_descriptor += "/" + qualifier_result(1)
       } else {
         if (primary == true) {
-          logger.warn(s"87,text,$qualifier")
+          logger.warn(s"87|text|$qualifier")
         } else {
-          logger.warn(s"88,text,$qualifier")
+          logger.warn(s"88|text|$qualifier")
         }
       }
     }
