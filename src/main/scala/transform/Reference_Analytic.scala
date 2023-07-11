@@ -139,7 +139,7 @@ class Reference_Analytic extends Base_Reference:
         }
         i += 1
       )
-      this.fields.put("title", "["+values.toArray.mkString(", ")+"]")
+      this.fields.put("title", values)
     }
   
   /**
@@ -169,7 +169,7 @@ class Reference_Analytic extends Base_Reference:
         }
         i += 1
       )
-      this.fields.put("corporate_author", "["+values.toArray.mkString(", ")+"]")
+      this.fields.put("corporate_author", values)
     }
 
   /**
@@ -219,5 +219,5 @@ class Reference_Analytic extends Base_Reference:
         i += 1
       )
       
-      this.fields.put("individual_author", "["+values_v10.toArray.mkString(", ")+"]")
+      this.fields.put("individual_author", values_v10)
     }
