@@ -35,6 +35,7 @@ metals.sbt
 data/isis/
 data/Dedup/indexes/
 data/mongodb/*
+data/replace/*.csv
 !data/mongodb/README.md
 
 logs/*.log
