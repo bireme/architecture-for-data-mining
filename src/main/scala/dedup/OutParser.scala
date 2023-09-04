@@ -165,16 +165,16 @@ object OutParser:
         )
 
         if (id_fiadmin == null) {
-          new_doc.put("reference", BsonNull())
+          fields.put("reference", BsonNull())
         } else {
-          new_doc.put("reference", id_fiadmin)
+          fields.put("reference", id_fiadmin)
         }
 
         val reference = obj.get("reference").get.asDocument()
         val reference_fields = reference.get("fields").asDocument()
 
         if (reference_fields.keySet.contains("cooperative_center_code") == true) {
-          new_doc.put("cooperative_center_code", reference_fields.get("cooperative_center_code"))
+          fields.put("cooperative_center_code", reference_fields.get("cooperative_center_code"))
         }
 
         var metadata_fields = Document()

@@ -165,7 +165,7 @@ class Reference_Source extends Base_Reference:
         }
         i += 1
       )
-      this.fields.put("title_monographic", "["+values.toArray.mkString(", ")+"]")
+      this.fields.put("title_monographic", values)
     }
 
   /**
@@ -195,7 +195,7 @@ class Reference_Source extends Base_Reference:
         }
         i += 1
       )
-      this.fields.put("title_collection", "["+values.toArray.mkString(", ")+"]")
+      this.fields.put("title_collection", values)
     }
 
   /**
@@ -227,7 +227,7 @@ class Reference_Source extends Base_Reference:
         }
         i += 1
       )
-      this.fields.put("corporate_author_monographic", "["+values.toArray.mkString(", ")+"]")
+      this.fields.put("corporate_author_monographic", values)
     }
 
   /**
@@ -257,7 +257,7 @@ class Reference_Source extends Base_Reference:
         }
         i += 1
       )
-      this.fields.put("corporate_author_collection", "["+values.toArray.mkString(", ")+"]")
+      this.fields.put("corporate_author_collection", values)
     }
 
   /**
@@ -305,7 +305,7 @@ class Reference_Source extends Base_Reference:
         i += 1
       )
       
-      this.fields.put("individual_author_collection", "["+values_v23.toArray.mkString(", ")+"]")
+      this.fields.put("individual_author_collection", values_v23)
     }
 
   /**
@@ -353,7 +353,7 @@ class Reference_Source extends Base_Reference:
         i += 1
       )
       
-      this.fields.put("individual_author_monographic", "["+values_v16.toArray.mkString(", ")+"]")
+      this.fields.put("individual_author_monographic", values_v16)
     }
 
   override def set_field_as_string(name: String, key: String) : Unit =
